@@ -1,0 +1,15 @@
+[
+  {
+    "scope": "app",
+    "theme": "furrow",
+    "shape": "app screen",
+    "axes": "light/grotesk-sans/warm",
+    "nav": "collapsible register sidebar",
+    "signature": "Society-scoped master register with stable IDs and audit history",
+    "entry": "public/index.html",
+    "imagery": "none; actual application records only",
+    "waived": [],
+    "prompt": "FundTrace Phase 1 foundation from Labour Society PRD",
+    "finishReview": "subagent: fix; login removed per offline amendment; read-only code treatment and mobile form grouping implemented"
+  }
+]

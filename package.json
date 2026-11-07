@@ -1,0 +1,23 @@
+{
+  "name": "fundtrace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline Labour Society funds tracking \u2014 Phase 1 foundation",
+  "engines": {
+    "node": ">=24.14.0"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "dev": "node --watch src/server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check src/server.mjs && node --check src/store.mjs && node --check public/app.js",
+    "test:ui": "node scripts/ui-test.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.1",
+    "playwright": "1.56.1",
+    "prettier": "3.9.10",
+    "puppeteer-core": "25.16.0"
+  }
+}

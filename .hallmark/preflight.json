@@ -1,0 +1,16 @@
+{
+  "scanned": "2026-11-07",
+  "findings": {
+    "fonts": "No existing application",
+    "palette": "No existing application",
+    "framework": "Empty Git repository",
+    "material": "User supplied PRD v1.0; no financial dataset or brand assets"
+  },
+  "preserve": ["PRD terminology and financial distinctions"],
+  "introduce": [
+    "Furrow app palette",
+    "Society-scoped registers",
+    "native accessible forms",
+    "offline persistence and local audit"
+  ]
+}
