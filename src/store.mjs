@@ -11,6 +11,7 @@ import {
   financialYear,
 } from "./domain.mjs";
 import { encrypt, decrypt, redact } from "./security.mjs";
+import { initializeReceipts, receiptMethods } from "./receipts.mjs";
 export const LOCAL_ACTOR = Object.freeze({
   id: "local-workspace",
   name: "Local workspace",
@@ -58,7 +59,8 @@ export class Store {
       CREATE INDEX IF NOT EXISTS audit_scope ON audit(society_id, id);
       CREATE TRIGGER IF NOT EXISTS audit_no_update BEFORE UPDATE ON audit BEGIN SELECT RAISE(ABORT,'Audit is append-only'); END;
       CREATE TRIGGER IF NOT EXISTS audit_no_delete BEFORE DELETE ON audit BEGIN SELECT RAISE(ABORT,'Audit is append-only'); END;
-      PRAGMA user_version=1;`);
+      `);
+    initializeReceipts(this);
   }
   close() {
     this.db.close();
@@ -159,6 +161,19 @@ export class Store {
           409,
         );
         const before = decrypt(old.payload, this.key);
+        if (
+          kind === "banks" &&
+          this.db
+            .prepare("SELECT 1 FROM bank_entries WHERE bank_id=? LIMIT 1")
+            .get(id)
+        ) {
+          demand(
+            data.openingBalance === before.openingBalance &&
+              data.openingDate === before.openingDate &&
+              data.accountNumber === before.accountNumber,
+            "Bank opening balance, date and account number are locked after posting receipts.",
+          );
+        }
         demand(
           !data.societyId || data.societyId === old.society_id,
           "A record cannot be moved to another Society.",
@@ -300,3 +315,4 @@ export class Store {
     };
   }
 }
+Object.assign(Store.prototype, receiptMethods);

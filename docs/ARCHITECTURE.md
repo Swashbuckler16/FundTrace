@@ -1,4 +1,4 @@
-# Offline Phase 1 architecture
+# Offline architecture, Phases 1–2
 
 Browser on this computer → loopback-only HTTP/JSON → validation → transactional local SQLite.
 
@@ -22,7 +22,9 @@ Encrypted payloads protect against a database-only disclosure, not compromise of
 
 The app runs with installed Node 24.14+ and a browser, without `npm install`. Phase 6 bundles the runtime for offline distribution and validates a disconnected installation. All attachment storage, statement parsing, charts, XLSX/PDF generation and recovery tools in future phases must be local. No cloud authentication, analytics, CDN fonts or background network calls are permitted.
 
-The master schema uses `user_version=1`. Future phases add forward-only migrations and preserve existing data. Receipts, allocations, bank movement, reversals and tax tables are added in their respective phases, with transaction-safe calculation rather than trusting the UI.
+Schema version 2 adds receipts, encrypted evidence and bank entries without replacing Phase 1 master data. `src/receipts.mjs` implements receipt validation and storage methods. Drafts have optimistic revisions and no Payment ID. Posting validates current master scope, evidence and duplicate candidates inside `BEGIN IMMEDIATE`, then assigns the Society/credit-year sequence, locks the receipt, inserts exactly one bank entry and appends audit history in the same transaction. Any failure rolls everything back. Database triggers prevent posted receipt updates and ledger mutation/deletion. Bank opening fields lock once an entry exists.
+
+Evidence is stored as encrypted base64 in SQLite, not at user-supplied filesystem paths. Uploads require a plain name, supported PDF/PNG/JPEG signature, a 2 MB decoded size limit and at most five files per receipt. The evidence route alone accepts JSON up to 3 MB; other writes remain limited to 64 KB. Downloads use attachment disposition, nosniff and a sandbox CSP. Signature checks are format screening, not malware scanning. Back up the database and its original key together.
 
 ## Verification
 

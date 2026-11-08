@@ -222,6 +222,72 @@ try {
     await page.getByLabel("Society name (required)").inputValue(),
     "Example Labour Society Updated",
   );
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await visit("?page=receipts&new=1");
+  await page
+    .locator("#f-societyId")
+    .selectOption({ label: "Example Labour Society Updated" });
+  await page
+    .locator("#f-departmentId")
+    .selectOption({ label: "PWD example division" });
+  await page
+    .locator("#f-projectId")
+    .selectOption({ label: "Example road repair — WO-2026-01" });
+  await page.locator("#f-bankId").selectOption({ label: "Operations" });
+  await page.locator("#f-creditDate").fill("2026-05-04");
+  await page.locator("#f-valueDate").fill("2026-05-05");
+  await page.locator("#f-amount").fill("12500.25");
+  await page.locator("#f-reference").fill("TEST-UTR-01");
+  await page.locator("#f-gstDeduction").fill("1000");
+  await check("receipt-form-desktop");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await page
+    .getByRole("heading", { name: "Receipt draft", exact: true })
+    .waitFor();
+  const receiptUrl = page.url();
+  const receiptId = new URL(receiptUrl).searchParams.get("id");
+  assert.equal(store.receipt(receiptId).available, 0);
+  assert.equal(store.bankBook()[0].balance, 0);
+  await page.locator("#confirm-post").check();
+  await page.getByRole("button", { name: "Post confirmed receipt" }).click();
+  await page
+    .getByText("Attach bank evidence before posting.", { exact: true })
+    .waitFor();
+  await page.locator("#evidence-file").setInputFiles({
+    name: "bank-advice.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4\nUI evidence"),
+  });
+  await page.getByRole("button", { name: "Attach evidence" }).click();
+  await page.getByRole("link", { name: "bank-advice.pdf" }).waitFor();
+  await check("receipt-draft-desktop");
+  await page.locator("#confirm-post").check();
+  await page.getByRole("button", { name: "Post confirmed receipt" }).click();
+  await page.getByRole("heading", { name: /^LSP-/ }).waitFor();
+  assert.equal(store.receipt(receiptId).available, 1250025);
+  assert.equal(await page.getByRole("link", { name: "Edit draft" }).count(), 0);
+  await check("receipt-posted-desktop");
+  await page.setViewportSize({ width: 375, height: 812 });
+  await check("receipt-posted-mobile");
+  await visit("?page=bankbook");
+  await page.getByRole("heading", { name: "Bank book", exact: true }).waitFor();
+  assert.equal(store.bankBook()[0].balance, 1250025);
+  await check("bankbook-mobile");
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await check("bankbook-desktop");
+  await visit("?page=receipts");
+  await page
+    .locator('#receipt-filter select[name="status"]')
+    .selectOption("Posted");
+  await page.getByRole("button", { name: "Apply filters" }).click();
+  await page.getByRole("link", { name: /Open LSP-/ }).waitFor();
+  await page.reload();
+  await page.getByRole("link", { name: /Open LSP-/ }).waitFor();
+  await check("receipt-register-desktop");
+  await page.setViewportSize({ width: 375, height: 812 });
+  await check("receipt-register-mobile");
+  await visit("?page=receipts&new=1");
+  await check("receipt-form-mobile");
   assert.deepEqual(
     externalRequests,
     [],

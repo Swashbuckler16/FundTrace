@@ -13,3 +13,5 @@ Build Web Data Visualization route: operational setup monitoring, represented by
 No photography, testimonial, logo wall, stock imagery or decorative animation. A JavaScript-disabled explanation is visible; local data-entry forms require the script. Light mode only for this phase, with separate dark-mode work required if later requested.
 
 Offline amendment: open directly to the overview. No login, account or user-management screens. The header identifies the offline workspace and local storage. Privacy masking is not an access restriction. All fonts, styles and scripts are local.
+
+Phase 2 adds Government receipts and Bank book above master navigation. Receipt entry reuses labelled forms and URL filters; bank/project choices are scoped to the selected Society and department. Drafts show zero available funds. A separate evidence step and explicit confirmation precede posting. Duplicate candidates link to their receipts. Money appears in accessible INR text and tabular ledgers; tax fields cannot imply available cash. These operational comparisons do not need a chart library. Posted details remain readable and immutable.

@@ -1,6 +1,6 @@
 # FundTrace
 
-A completely offline Labour Society workspace for tracing Government receipts to beneficiary payments. **Phase 1 implements the foundation:** Society, department, project, bank and beneficiary records, numbering and change history. The application opens directly, with no login, passwords, accounts or cloud services.
+A completely offline Labour Society workspace for tracing Government receipts to beneficiary payments. **Phases 1 and 2 implement masters and Government receipts:** draft entry, evidence, confirmed posting, immutable Payment IDs and the bank book. The application opens directly, with no login, passwords, accounts or cloud services.
 
 ## Start on this computer
 
@@ -52,4 +52,12 @@ UI tests use Edge on Windows or Playwright Chromium elsewhere (`npx playwright i
 
 ## Delivery
 
-See the [six-phase roadmap](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), [design](DESIGN.md), and [verification report](docs/PHASE1-VERIFICATION.md). Phase 1 does not yet record receipts or payments. Continue only after the owner approves this phase.
+See the [six-phase roadmap](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), [design](DESIGN.md), and [Phase 2 verification](docs/PHASE2-VERIFICATION.md). Payments and allocation begin in Phase 3, after the owner's review.
+
+## Record a receipt
+
+Open **Government receipts → Record receipt**. Select the Society, department, project and receiving bank; enter the actual credited amount, credit/value dates and payment reference. You can save incomplete records as drafts; drafts create no cash or Payment ID.
+
+Attach local PDF, PNG or JPEG bank evidence (maximum five files, 2 MB each). Review the receipt and confirm the bank credit to post it. All project/bank mappings, dates, positive amount and evidence must be complete. Electronic transfers require a reference, cheques require a cheque number, and Other requires narration. Possible duplicates require explicit confirmation and a documented reason.
+
+Posting assigns `LSP-SOCIETY-FY-SEQUENCE` using the **credit date's** Indian financial year and adds only the credited amount to the bank book. Gross bill, GST deductions and tax credits are informational, never cash. Evidence is encrypted in the same local database. Posted receipts and evidence are locked; reversal controls arrive in Phase 3. Bank opening balance/date/account number cannot change once credits have posted. Bank balances currently include opening balances and receipt credits only; they are not reconciled statement balances.

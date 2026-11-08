@@ -13,12 +13,12 @@ const assets = {
   "/base.css": ["base.css", "text/css"],
 };
 
-export async function readRequestBody(stream) {
+export async function readRequestBody(stream, limit = 65536) {
   const chunks = [];
   let size = 0;
   for await (const chunk of stream) {
     size += chunk.length;
-    demand(size <= 65536, "Request is too large.", 413);
+    demand(size <= limit, "Request is too large.", 413);
     chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString("utf8");
@@ -89,7 +89,12 @@ export function createApp(store) {
           "Use JSON requests.",
           415,
         );
-        const body = await readRequestBody(req);
+        const body = await readRequestBody(
+          req,
+          /^\/api\/receipts\/[\w-]+\/evidence$/.test(path)
+            ? 3 * 1024 * 1024
+            : 65536,
+        );
         try {
           data = JSON.parse(body || "{}");
         } catch {
@@ -99,6 +104,47 @@ export function createApp(store) {
           data && typeof data === "object" && !Array.isArray(data),
           "Use a JSON object.",
         );
+      }
+      if (path === "/api/bank-book" && req.method === "GET") {
+        send(200, store.bankBook(actor));
+        return;
+      }
+      const receipt = path.match(
+        /^\/api\/receipts(?:\/([\w-]+))?(?:\/(post|evidence)(?:\/([\w-]+))?)?$/,
+      );
+      if (receipt) {
+        const [, id, action, fileId] = receipt;
+        if (req.method === "GET" && id && action === "evidence" && fileId) {
+          const file = store.evidenceFile(id, fileId);
+          res.writeHead(200, {
+            "Content-Type": file.type,
+            "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+            "Content-Security-Policy": "sandbox; default-src 'none'",
+          });
+          res.end(Buffer.from(file.data, "base64"));
+          return;
+        }
+        if (req.method === "GET" && !action) {
+          send(200, id ? store.receipt(id) : store.receipts());
+          return;
+        }
+        if (req.method === "POST" && !id) {
+          send(201, store.saveReceipt(actor, null, data));
+          return;
+        }
+        if (req.method === "PUT" && id && !action) {
+          send(200, store.saveReceipt(actor, id, data));
+          return;
+        }
+        if (req.method === "POST" && id && !fileId && action) {
+          send(
+            200,
+            action === "post"
+              ? store.postReceipt(actor, id, data)
+              : store.addEvidence(actor, id, data),
+          );
+          return;
+        }
       }
       if (path === "/api/audit" && req.method === "GET") {
         send(200, store.auditList(actor, url.searchParams.get("entity")));
