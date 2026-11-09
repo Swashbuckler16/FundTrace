@@ -1,6 +1,6 @@
 # FundTrace
 
-A completely offline Labour Society workspace for tracing Government receipts to beneficiary payments. **Phases 1 and 2 implement masters and Government receipts:** draft entry, evidence, confirmed posting, immutable Payment IDs and the bank book. The application opens directly, with no login, passwords, accounts or cloud services.
+A completely offline Labour Society workspace for tracing Government receipts to beneficiary payments. **Phases 1–3 implement masters, receipts, claims, instalments, labour batches, funding allocations and reversals.** The application opens directly, with no login, passwords, accounts or cloud services.
 
 ## Start on this computer
 
@@ -52,7 +52,7 @@ UI tests use Edge on Windows or Playwright Chromium elsewhere (`npx playwright i
 
 ## Delivery
 
-See the [six-phase roadmap](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), [design](DESIGN.md), and [Phase 2 verification](docs/PHASE2-VERIFICATION.md). Payments and allocation begin in Phase 3, after the owner's review.
+See the [six-phase roadmap](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), [design](DESIGN.md), and [Phase 3 verification](docs/PHASE3-VERIFICATION.md). Statement reconciliation and tax registers begin in Phase 4, after the owner's review.
 
 ## Record a receipt
 
@@ -60,4 +60,16 @@ Open **Government receipts → Record receipt**. Select the Society, department,
 
 Attach local PDF, PNG or JPEG bank evidence (maximum five files, 2 MB each). Review the receipt and confirm the bank credit to post it. All project/bank mappings, dates, positive amount and evidence must be complete. Electronic transfers require a reference, cheques require a cheque number, and Other requires narration. Possible duplicates require explicit confirmation and a documented reason.
 
-Posting assigns `LSP-SOCIETY-FY-SEQUENCE` using the **credit date's** Indian financial year and adds only the credited amount to the bank book. Gross bill, GST deductions and tax credits are informational, never cash. Evidence is encrypted in the same local database. Posted receipts and evidence are locked; reversal controls arrive in Phase 3. Bank opening balance/date/account number cannot change once credits have posted. Bank balances currently include opening balances and receipt credits only; they are not reconciled statement balances.
+Posting assigns `LSP-SOCIETY-FY-SEQUENCE` using the **credit date's** Indian financial year and adds only the credited amount to the bank book. Gross bill, GST deductions and tax credits are informational, never cash. Evidence is encrypted in the same local database. Posted receipts and evidence are locked. Bank opening balance/date/account number cannot change once credits have posted. Bank balances include opening balances, receipt credits, payment debits and reversals; they are not yet reconciled statement balances.
+
+## Claims, payments and corrections
+
+1. Open **Claims & instalments → New claim**. Choose the Society, project and beneficiary. Enter the invoice/work/wage reference and category-specific details. Net payable is gross (including GST) minus TDS, retention and other deductions. GST is informational and not added twice. Save, review and approve the claim locally. Approved financial terms are locked.
+2. Open **Outward payments → New payment**. Choose the same Society/project and paying bank, enter actual debit/value dates and the bank reference. Add a claim amount for each instalment and allocate the full debit to one or more posted receipt IDs. Each payment gets its own `OUT-FY-SEQUENCE` when posted.
+3. For a labour batch, check **Labour batch**, add the individual approved labour claims and each beneficiary amount, and allocate their combined total to receipts. The distribution schedule creates **one bank debit**, never one debit per row plus a second batch debit.
+4. Save the draft, attach supporting evidence, then **Submit for review → Approve payment → Post confirmed bank debit**, confirming each action. These are local recorded decisions, not different authenticated users. FundTrace records money already paid; it does not initiate a transfer.
+5. Use **Return to draft** to correct a submitted/approved record. Cancel or mark an unposted failed instruction with a reason; neither affects balances. For a posted payment that has been returned or failed to settle, confirm a reversal with its date, bank evidence reference and reason. This restores bank cash, receipt availability and claim pending once, retaining the original. **Create corrected payment** links the replacement to its original and requires new evidence and confirmation.
+
+Funding is restricted to posted receipts in the **same Society, project and bank account**, with no unfunded residual. Draft/submitted/approved payments do not reserve funds. Posting atomically rechecks receipt and claim capacity, exact allocation/distribution totals, duplicate bank references and bank-book balances. Same-amount/date debits require an explicit duplicate override reason; a reused bank reference/cheque is blocked.
+
+A receipt can be reversed only after all its linked payments are reversed. Movements cannot precede their source credit, and released funding cannot be used before the latest linked reversal date. Backdated movements that would make a historical or later bank-book balance negative are rejected. Cash mode must represent an evidenced bank-funded debit/withdrawal; this is not a separate petty-cash ledger. Tax deductions are recorded on claims; statutory tax-register workflows remain Phase 4.

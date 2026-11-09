@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve, dirname } from "node:path";
-import { Store } from "../src/store.mjs";
+import { Store, LOCAL_ACTOR } from "../src/store.mjs";
 import { createApp } from "../src/server.mjs";
 
 const directory = mkdtempSync(join(tmpdir(), "fundtrace-ui-"));
@@ -288,6 +288,217 @@ try {
   await check("receipt-register-mobile");
   await visit("?page=receipts&new=1");
   await check("receipt-form-mobile");
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await visit("?page=claims&new=1");
+  await page
+    .locator("#f-societyId")
+    .selectOption({ label: "Example Labour Society Updated" });
+  await page
+    .locator("#f-projectId")
+    .selectOption({ label: "Example road repair" });
+  await page
+    .locator("#f-beneficiaryId")
+    .selectOption({ label: "Example supplier" });
+  await page.locator("#f-reference").fill("INV-UI-01");
+  await page.locator("#f-invoiceDate").fill("2026-05-04");
+  await page.locator("#f-gross").fill("1000");
+  await check("claim-form-desktop");
+  await page.getByRole("button", { name: "Save claim draft" }).click();
+  await page.getByRole("heading", { name: /^CLM-/ }).waitFor();
+  const claimId = new URL(page.url()).searchParams.get("id");
+  await page.locator("#action-confirm").check();
+  await page.getByRole("button", { name: "Confirm action" }).click();
+  await page.getByText(/^Approved, entered/).waitFor();
+  await check("claim-approved-desktop");
+  await visit("?page=payments&new=1");
+  await page
+    .locator("#f-societyId")
+    .selectOption({ label: "Example Labour Society Updated" });
+  await page
+    .locator("#f-projectId")
+    .selectOption({ label: "Example road repair" });
+  await page.locator("#f-bankId").selectOption({ label: "Operations" });
+  await page.locator("#f-paymentDate").fill("2026-05-06");
+  await page.locator("#f-valueDate").fill("2026-05-06");
+  await page.locator("#f-reference").fill("UI-DEBIT-01");
+  await page.locator("#distribution-rows select").selectOption(claimId);
+  await page.locator("#distribution-rows input").fill("250.25");
+  await page.locator("#allocation-rows select").selectOption(receiptId);
+  await page.locator("#allocation-rows input").fill("250.25");
+  await check("payment-form-desktop");
+  await page.setViewportSize({ width: 375, height: 812 });
+  await check("payment-form-mobile");
+  await page.getByRole("button", { name: "Save payment draft" }).click();
+  await page
+    .getByRole("heading", { name: "Payment draft", exact: true })
+    .waitFor();
+  const paymentId = new URL(page.url()).searchParams.get("id");
+  await page.locator("#payment-file").setInputFiles({
+    name: "payment-proof.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4\nPayment advice"),
+  });
+  await page.getByRole("button", { name: "Attach payment evidence" }).click();
+  await page.getByRole("link", { name: "payment-proof.pdf" }).waitFor();
+  for (const [action, state] of [
+    ["Submit for review", "Submitted"],
+    ["Approve payment", "Approved"],
+    ["Post confirmed bank debit", "Posted"],
+  ]) {
+    await page.locator("#finance-action #f-action").selectOption(action);
+    await page.locator("#action-confirm").check();
+    await page.getByRole("button", { name: "Confirm action" }).click();
+    await page.getByText(new RegExp(`^${state}, entered`)).waitFor();
+  }
+  assert.equal(store.claim(claimId).pending, 74975);
+  assert.equal(store.receipt(receiptId).available, 1225000);
+  await check("payment-posted-mobile");
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await check("payment-posted-desktop");
+  await visit(`?page=receipts&id=${receiptId}`);
+  await page.getByRole("link", { name: /^OUT-/ }).waitFor();
+  await check("receipt-allocated-desktop");
+  await visit(`?page=payments&id=${paymentId}`);
+  await page.locator("#financial-reversal #f-date").fill("2026-05-07");
+  await page.locator("#financial-reversal #f-reference").fill("UI-RETURN-01");
+  await page
+    .locator("#financial-reversal #f-reason")
+    .fill("Bank returned the incorrect transfer in full");
+  await page.locator("#reverse-confirm").check();
+  await page.getByRole("button", { name: "Confirm reversal" }).click();
+  await page.getByText(/^Reversed, entered/).waitFor();
+  assert.equal(store.claim(claimId).pending, 100000);
+  assert.equal(store.receipt(receiptId).available, 1250025);
+  await check("payment-reversed-desktop");
+  await visit(`?page=receipts&id=${receiptId}`);
+  await page.getByText(/Reversed \(excluded from balances\)/).waitFor();
+  await page.getByRole("link", { name: /^OUT-/ }).waitFor();
+  await check("receipt-reversal-history");
+  await visit(`?page=payments&id=${paymentId}`);
+  await page.getByRole("link", { name: "Create corrected payment" }).click();
+  await page
+    .getByRole("heading", { name: "New payment", exact: true })
+    .waitFor();
+  assert.equal(await page.locator("#f-reference").inputValue(), "UI-DEBIT-01");
+  await visit("?page=payments");
+  await check("payments-register-desktop");
+  await page.setViewportSize({ width: 375, height: 812 });
+  await check("payments-register-mobile");
+  await visit("?page=bankbook");
+  await page.getByRole("heading", { name: "Bank book", exact: true }).waitFor();
+  await check("bankbook-debits-mobile");
+  // Isolated wage fixtures let the browser exercise multiple beneficiary rows.
+  const society = store.list(LOCAL_ACTOR, "societies")[0],
+    project = store.list(LOCAL_ACTOR, "projects")[0];
+  const labourClaims = [];
+  for (const name of ["Example worker one", "Example worker two"]) {
+    const beneficiary = store.save(LOCAL_ACTOR, "beneficiaries", null, {
+      name,
+      societyId: society.id,
+      category: "Individual labourer",
+    });
+    let claim = store.saveClaim(LOCAL_ACTOR, null, {
+      societyId: society.id,
+      projectId: project.id,
+      beneficiaryId: beneficiary.id,
+      reference: name + " wages",
+      periodStart: "2026-05-01",
+      periodEnd: "2026-05-02",
+      quantity: "2",
+      rate: "100",
+      certification: "Test attendance sheet",
+      gross: "200",
+    });
+    claim = store.transitionClaim(LOCAL_ACTOR, claim.id, "approve", {
+      revision: claim.revision,
+      confirm: true,
+    });
+    labourClaims.push(claim);
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await visit("?page=payments&new=1");
+  await page.locator("#f-societyId").selectOption(society.id);
+  await page.locator("#f-projectId").selectOption(project.id);
+  await page.locator("#f-bankId").selectOption({ label: "Operations" });
+  await page.locator("#f-paymentDate").fill("2026-05-08");
+  await page.locator("#f-valueDate").fill("2026-05-08");
+  await page.locator("#f-reference").fill("LABOUR-BATCH-01");
+  await page.locator("#batch").check();
+  await page
+    .locator("#distribution-rows select")
+    .selectOption(labourClaims[0].id);
+  await page.locator("#distribution-rows input").fill("200");
+  await page.getByRole("button", { name: "Add claim row" }).click();
+  await page
+    .locator("#distribution-rows select")
+    .nth(1)
+    .selectOption(labourClaims[1].id);
+  await page.locator("#distribution-rows input").nth(1).fill("200");
+  await page.locator("#allocation-rows select").selectOption(receiptId);
+  await page.locator("#allocation-rows input").fill("400");
+  await check("labour-batch-desktop");
+  await page.setViewportSize({ width: 375, height: 812 });
+  await check("labour-batch-mobile");
+  assert.match(
+    await page.locator("#allocation-rows .funding-summary").innerText(),
+    /available/,
+  );
+  await page.getByRole("button", { name: "Save payment draft" }).click();
+  await page
+    .getByRole("heading", { name: "Payment draft", exact: true })
+    .waitFor();
+  const batchId = new URL(page.url()).searchParams.get("id");
+  await page.locator("#payment-file").setInputFiles({
+    name: "wage-bank-proof.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4\nWage schedule and bank proof"),
+  });
+  await page.getByRole("button", { name: "Attach payment evidence" }).click();
+  await page.getByRole("link", { name: "wage-bank-proof.pdf" }).waitFor();
+  for (const [action, state] of [
+    ["Submit for review", "Submitted"],
+    ["Approve payment", "Approved"],
+    ["Post confirmed bank debit", "Posted"],
+  ]) {
+    await page.locator("#finance-action #f-action").selectOption(action);
+    await page.locator("#action-confirm").check();
+    await page.getByRole("button", { name: "Confirm action" }).click();
+    await page.getByText(new RegExp(`^${state}, entered`)).waitFor();
+  }
+  assert.equal(store.payment(batchId).distributions.length, 2);
+  assert.equal(
+    store.bankBook()[0].entries.filter((e) => e.entity_id === batchId).length,
+    1,
+  );
+  assert.equal(store.claim(labourClaims[0].id).pending, 0);
+  assert.equal(store.receipt(receiptId).available, 1210025);
+  await check("labour-batch-posted-mobile");
+  await page.locator("#financial-reversal #f-date").fill("2026-05-09");
+  await page.locator("#financial-reversal #f-reference").fill("BATCH-RETURN");
+  await page
+    .locator("#financial-reversal #f-reason")
+    .fill("Bank returned the complete labour batch");
+  await page.locator("#reverse-confirm").check();
+  await page.getByRole("button", { name: "Confirm reversal" }).click();
+  await page.getByText(/^Reversed, entered/).waitFor();
+  await visit(`?page=receipts&id=${receiptId}`);
+  await page.locator("#financial-reversal #f-date").fill("2026-05-10");
+  await page.locator("#financial-reversal #f-reference").fill("CREDIT-RETURN");
+  await page
+    .locator("#financial-reversal #f-reason")
+    .fill("Bank reversed the original receipt credit");
+  await page.locator("#reverse-confirm").check();
+  await page.getByRole("button", { name: "Confirm reversal" }).click();
+  await page.getByText(/This receipt is reversed\./).waitFor();
+  assert.equal(
+    await page
+      .getByText(/Drafts do not affect balances or receive a Payment ID/)
+      .count(),
+    0,
+  );
+  assert.equal(store.receipt(receiptId).available, 0);
+  assert.equal(store.bankBook()[0].balance, 0);
+  await check("receipt-reversed-mobile");
   assert.deepEqual(
     externalRequests,
     [],

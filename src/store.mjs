@@ -12,6 +12,7 @@ import {
 } from "./domain.mjs";
 import { encrypt, decrypt, redact } from "./security.mjs";
 import { initializeReceipts, receiptMethods } from "./receipts.mjs";
+import { initializePayments, paymentMethods } from "./payments.mjs";
 export const LOCAL_ACTOR = Object.freeze({
   id: "local-workspace",
   name: "Local workspace",
@@ -61,6 +62,7 @@ export class Store {
       CREATE TRIGGER IF NOT EXISTS audit_no_delete BEFORE DELETE ON audit BEGIN SELECT RAISE(ABORT,'Audit is append-only'); END;
       `);
     initializeReceipts(this);
+    initializePayments(this);
   }
   close() {
     this.db.close();
@@ -316,3 +318,4 @@ export class Store {
   }
 }
 Object.assign(Store.prototype, receiptMethods);
+Object.assign(Store.prototype, paymentMethods);

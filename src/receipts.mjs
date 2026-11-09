@@ -21,7 +21,7 @@ export function initializeReceipts(store) {
       BEGIN SELECT RAISE(ABORT,'Bank entries are immutable'); END;
     CREATE TRIGGER IF NOT EXISTS bank_entry_no_delete BEFORE DELETE ON bank_entries
       BEGIN SELECT RAISE(ABORT,'Bank entries cannot be deleted'); END;
-    PRAGMA user_version=2;`);
+    `);
 }
 function read(store, row) {
   demand(row, "Receipt not found.", 404);
@@ -100,7 +100,16 @@ export const receiptMethods = {
     return this.db
       .prepare("SELECT * FROM receipts ORDER BY created_at DESC")
       .all()
-      .map((row) => read(this, row));
+      .map((row) => {
+        const result = read(this, row);
+        if (this.reversal("receipts", row.id)) result.status = "Reversed";
+        result.available =
+          result.status === "Posted"
+            ? result.amount -
+              this.receiptAllocation(row.id).reduce((n, r) => n + r.amount, 0)
+            : 0;
+        return result;
+      });
   },
   receipt(id) {
     const result = read(
@@ -128,7 +137,21 @@ export const receiptMethods = {
               r.creditDate === result.creditDate)),
       )
       .map((r) => ({ id: r.id, paymentId: r.paymentId }));
-    result.available = result.status === "Posted" ? result.amount : 0;
+    result.reversal = this.reversal("receipts", id);
+    if (result.reversal) result.status = "Reversed";
+    result.allocations = this.receiptAllocation(id);
+    result.allocationHistory = this.receiptAllocation(id, true);
+    result.allocated = result.allocations.reduce((n, r) => n + r.amount, 0);
+    result.available =
+      result.status === "Posted" ? result.amount - result.allocated : 0;
+    result.utilisation =
+      result.status !== "Posted"
+        ? result.status
+        : result.available === 0
+          ? "Fully utilised"
+          : result.allocated > 0
+            ? "Partially utilised"
+            : "Unutilised";
     return result;
   },
   saveReceipt(actor, id, raw) {

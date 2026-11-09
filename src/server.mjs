@@ -8,6 +8,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const assets = {
   "/": ["index.html", "text/html"],
   "/app.js": ["app.js", "text/javascript"],
+  "/payments.js": ["payments.js", "text/javascript"],
   "/styles.css": ["styles.css", "text/css"],
   "/tokens.css": ["tokens.css", "text/css"],
   "/base.css": ["base.css", "text/css"],
@@ -91,7 +92,7 @@ export function createApp(store) {
         );
         const body = await readRequestBody(
           req,
-          /^\/api\/receipts\/[\w-]+\/evidence$/.test(path)
+          /^\/api\/(receipts|payments)\/[\w-]+\/evidence$/.test(path)
             ? 3 * 1024 * 1024
             : 65536,
         );
@@ -109,8 +110,70 @@ export function createApp(store) {
         send(200, store.bankBook(actor));
         return;
       }
+      const finance = path.match(
+        /^\/api\/(claims|payments)(?:\/([\w-]+))?(?:\/(approve|submit|post|return|cancel|fail|reverse|evidence)(?:\/([\w-]+))?)?$/,
+      );
+      if (finance) {
+        const [, kind, id, action, fileId] = finance;
+        if (req.method === "GET" && !action) {
+          send(
+            200,
+            id
+              ? kind === "claims"
+                ? store.claim(id)
+                : store.payment(id)
+              : kind === "claims"
+                ? store.claims()
+                : store.payments(),
+          );
+          return;
+        }
+        if (req.method === "POST" && !id) {
+          send(
+            201,
+            kind === "claims"
+              ? store.saveClaim(actor, null, data)
+              : store.savePayment(actor, null, data),
+          );
+          return;
+        }
+        if (req.method === "PUT" && id && !action) {
+          send(
+            200,
+            kind === "claims"
+              ? store.saveClaim(actor, id, data)
+              : store.savePayment(actor, id, data),
+          );
+          return;
+        }
+        if (
+          req.method === "GET" &&
+          kind === "payments" &&
+          action === "evidence" &&
+          fileId
+        ) {
+          const file = store.paymentEvidenceFile(id, fileId);
+          res.writeHead(200, {
+            "Content-Type": file.type,
+            "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+            "Content-Security-Policy": "sandbox; default-src 'none'",
+          });
+          res.end(Buffer.from(file.data, "base64"));
+          return;
+        }
+        if (req.method === "POST" && id && action && !fileId) {
+          if (kind === "claims")
+            send(200, store.transitionClaim(actor, id, action, data));
+          else if (action === "evidence")
+            send(200, store.addPaymentEvidence(actor, id, data));
+          else if (action === "reverse")
+            send(200, store.reverseFinancial(actor, "payments", id, data));
+          else send(200, store.transitionPayment(actor, id, action, data));
+          return;
+        }
+      }
       const receipt = path.match(
-        /^\/api\/receipts(?:\/([\w-]+))?(?:\/(post|evidence)(?:\/([\w-]+))?)?$/,
+        /^\/api\/receipts(?:\/([\w-]+))?(?:\/(post|reverse|evidence)(?:\/([\w-]+))?)?$/,
       );
       if (receipt) {
         const [, id, action, fileId] = receipt;
@@ -139,9 +202,11 @@ export function createApp(store) {
         if (req.method === "POST" && id && !fileId && action) {
           send(
             200,
-            action === "post"
-              ? store.postReceipt(actor, id, data)
-              : store.addEvidence(actor, id, data),
+            action === "reverse"
+              ? store.reverseFinancial(actor, "receipts", id, data)
+              : action === "post"
+                ? store.postReceipt(actor, id, data)
+                : store.addEvidence(actor, id, data),
           );
           return;
         }

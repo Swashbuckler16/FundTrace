@@ -11,7 +11,7 @@
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",
     "test": "node --test test/*.test.mjs",
-    "check": "node --check src/server.mjs && node --check src/store.mjs && node --check public/app.js",
+    "check": "node --check src/server.mjs && node --check src/store.mjs && node --check src/receipts.mjs && node --check src/payments.mjs && node --check public/app.js && node --check public/payments.js",
     "test:ui": "node scripts/ui-test.mjs"
   },
   "devDependencies": {

@@ -218,7 +218,7 @@ test("posting failure rolls back ID, ledger and state; second connection cannot 
     assert.equal(second.bankBook(actor)[0].entries.length, 1);
     assert.equal(
       second.db.prepare("PRAGMA user_version").get().user_version,
-      2,
+      3,
     );
   } finally {
     second.close();

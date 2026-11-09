@@ -26,7 +26,7 @@ No users, roles, passwords, sessions, MFA or login will be added. Later approval
 ## Decisions needed before later phases
 
 1. Phase 2: receipt ID format, bank reference uniqueness, bill handling and local document limits.
-2. Phase 3: cross-project/cross-account funding rules, unallocated-funding exceptions, local confirmation thresholds and labour batch records. Default: no unallocated funding.
+2. Phase 3 decision: same-Society, same-project, same-bank receipt funding only; no unallocated residual. Every payment uses explicit local submission/approval/posting confirmation. Labour batches have one debit and multiple approved labour-claim distribution rows. No amount threshold bypasses review. Broader funding exceptions require a later explicit policy decision.
 3. Phase 4: accountant confirms the referenced 2%, calculation basis/evidence/effective dates; sample bank statement formats and period-lock policy.
 4. Phase 5: report date basis and export content/masking choices.
 5. Phase 6: target Windows versions, portable/installer preference, expected volume, local data/backup locations, retention, recovery targets and UAT owner.

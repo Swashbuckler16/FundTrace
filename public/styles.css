@@ -680,3 +680,28 @@ input[readonly] {
 .summary > div span {
   display: block;
 }
+.finance-section {
+  margin-top: var(--space-xl);
+}
+.funding-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: var(--space-md);
+  align-items: end;
+  margin-block: var(--space-md);
+}
+.funding-row select {
+  max-width: 100%;
+}
+.funding-summary {
+  display: block;
+  min-height: 1.5em;
+  overflow-wrap: anywhere;
+  color: var(--color-muted);
+  margin-top: var(--space-xs);
+}
+@media (max-width: 40rem) {
+  .funding-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
