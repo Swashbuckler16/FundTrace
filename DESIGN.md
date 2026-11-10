@@ -1,5 +1,7 @@
 # FundTrace interface system
 
+Phase 5 adds source-linked financial dashboard, search, Payment ID 360 and report/export screens. URL parameters retain report type, scope and period. Plain SVG comparison bars encode magnitude with signed INR values always visible; tables are the fallback. Report tables paginate at 25 rows on screen but export every filtered row. Current positions and period movements are explicitly separated. Printed wide reports use labelled records, date/scope metadata, totals and page numbers. The approved Furrow tokens and local system fonts remain unchanged.
+
 Phase 4 continues the locked system with statement import/preview, reconciliation matching, bank adjustments, period locks and separate tax registers. Use scoped field IDs across adjacent forms, preserve invalid input, and invalidate previews when source inputs change. Match options wrap the selected reference and remaining amount below the control. Tax event forms enable only applicable fields; attachment links include purpose and evidence reference. Tables carry precise INR amounts and mobile labels; charts are not required for these operational tasks.
 
 Mode: Operate. The signature object is a Society-linked master register with immutable IDs and adjacent change history. The owner approved a restrained utilitarian finance workspace.

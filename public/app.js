@@ -4,6 +4,7 @@ import {
   bindFinancialReversal,
 } from "./payments.js";
 import { renderReconciliation } from "./reconciliation.js";
+import { renderReports } from "./reports.js";
 const financeUI = () => ({
   api,
   esc,
@@ -24,6 +25,9 @@ const app = document.querySelector("#app");
 let records = {},
   renderVersion = 0;
 const titles = {
+  dashboard: "Financial dashboard",
+  search: "Search & Payment ID 360",
+  reports: "Reports & exports",
   overview: "Workspace overview",
   receipts: "Government receipts",
   claims: "Claims & instalments",
@@ -50,6 +54,9 @@ const singular = {
   beneficiaries: "beneficiary",
 };
 const icons = {
+  dashboard: "M3 21h18M6 17V9m6 8V3m6 14v-5",
+  search: "M21 21l-6-6M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0",
+  reports: "M4 3h16v18H4zM8 8h8m-8 4h8m-8 4h4",
   overview: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
   receipts: "M5 3h14v18l-3-2-4 2-4-2-3 2zM8 8h8m-8 4h8",
   claims: "M5 3h14v18H5zM8 7h8m-8 5h8m-8 5h4",
@@ -170,6 +177,7 @@ function bindForm(id, callback) {
   });
 }
 function shell(page) {
+  document.querySelector("#print-report")?.remove();
   const nav = Object.keys(icons);
   app.innerHTML = `<div class="shell"><aside class="sidebar" id="navigation"><a href="${href("overview")}" class="wordmark"><span class="mark" aria-hidden="true">F</span>FundTrace</a><nav aria-label="Primary">${nav.map((key, i) => `${key === "societies" ? '<p class="nav-caption">Master records</p>' : ""}${key === "audit" ? '<p class="nav-caption">Workspace controls</p>' : ""}<a href="${href(key)}" ${page === key ? 'aria-current="page"' : ""}>${icon(key)}${titles[key]}</a>`).join("")}</nav><div class="sidebar-foot"><strong>Funds workspace</strong><p>Trace receipts, claims and payments locally.</p></div></aside><div class="workspace"><header class="topbar"><button type="button" class="quiet mobile-menu" id="menu" aria-controls="navigation" aria-expanded="false">Menu</button><span class="muted">Labour Society administration</span><span class="local-mode">Offline workspace <small>Saved on this computer</small></span></header><main id="main" class="content" tabindex="-1"><p role="status">Loading records…</p></main></div></div>`;
   document.querySelector("#menu").onclick = () => {
@@ -439,6 +447,8 @@ async function render() {
     if (current !== renderVersion) return;
     records = Object.fromEntries(lists);
     if (page === "overview") main.innerHTML = overview();
+    else if (["dashboard", "search", "reports", "trace"].includes(page))
+      await renderReports(main, r, financeUI());
     else if (page === "receipts") await renderReceipts(main, r);
     else if (page === "claims" || page === "payments")
       await renderFinance(main, r, financeUI());
@@ -677,11 +687,11 @@ async function renderReceipts(main, r) {
         `${receipt.status}, Entered ${when(receipt.createdAt)}, Local workspace`,
         receipt.status === "Draft"
           ? `<a class="button" href="${href("receipts", { id: r.id, edit: "1" })}">Edit draft</a>`
-          : "",
+          : `<a class="button" href="${href("trace", { id: r.id })}">Payment ID 360</a>`,
       ) +
       `<div class="summary"><div><strong>${rupees(receipt.amount)}</strong><span>Bank credit ${receipt.status === "Draft" ? "(draft)" : receipt.status === "Reversed" ? "(reversed)" : "(posted)"}</span></div><div><strong>${rupees(receipt.available)}</strong><span>Available for allocation</span></div></div>
       <dl class="details">${receiptFields.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${esc(f.type === "decimal" ? rupees(receipt[f.key]) : readable(f, receipt[f.key]))}</dd></div>`).join("")}</dl>
-      <p class="notice">Tax figures are separate from cash. Statement reconciliation starts in Phase 4. ${receipt.status === "Draft" ? "Drafts do not affect balances or receive a Payment ID." : receipt.status === "Reversed" ? "This receipt is reversed. Its Payment ID, original bank credit and reversal remain in history." : "Posted receipts are locked. Use a reasoned reversal to correct them."}</p>
+      <p class="notice">Tax figures are separate from cash. Use Payment ID 360 to review linked payments, tax and reconciliation. ${receipt.status === "Draft" ? "Drafts do not affect balances or receive a Payment ID." : receipt.status === "Reversed" ? "This receipt is reversed. Its Payment ID, original bank credit and reversal remain in history." : "Posted receipts are locked. Use a reasoned reversal to correct them."}</p>
       <section><h2>Bank evidence</h2>${receipt.evidence.length ? `<ul>${receipt.evidence.map((f) => `<li><a href="/api/receipts/${r.id}/evidence/${f.id}" download>${esc(f.name)}</a> (${Math.ceil(f.size / 1024)} KB)</li>`).join("")}</ul>` : "<p>No evidence attached yet.</p>"}
       ${receipt.status === "Draft" ? `<form id="evidence-form" class="form-panel" novalidate>${errorBox("")}<label>Evidence file (required)<input id="evidence-file" name="file" type="file" accept=".pdf,.png,.jpg,.jpeg" required></label><p>PDF, PNG or JPEG. Up to 2 MB each, maximum five files. Stored encrypted on this computer.</p><button type="submit">Attach evidence</button></form>` : ""}</section>
       ${

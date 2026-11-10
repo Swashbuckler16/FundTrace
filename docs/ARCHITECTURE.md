@@ -46,4 +46,12 @@ Schema 4 adds encrypted statement imports/lines, reconciliation links/exceptions
 
 The bank book assigns stable movement keys to receipts, payments, reversals and adjustments. Matching totals belong to those keys, independently of receipt allocations. Reconciliation never changes cash. Bank charges affect only bank cash; tax records affect neither cash nor receipt funding. Tax events use insertion order even when timestamps tie.
 
+## Phase 5 reports and search
+
+`src/reports.mjs` builds read-transaction snapshots from existing registers and the combined bank book. One category aggregation helper drives consolidated and project breakdowns. Cash includes original and reversal movements on their individual business dates; current receipt, claim and tax positions are labelled separately. No schema migration is required.
+
+Report/search/trace GET routes expose source-linked views. A same-origin POST prepares exports and writes an audit entry. `public/reports.js` owns URL filters, 25-row screen pagination, source links, one SVG comparison and local exports. XLSX reuses the bundled SheetJS asset, writes text without formula properties and uses explicit calendar-day serials to avoid timezone shifts. Native browser print/save-to-PDF uses a separate complete report DOM with paged CSS; wide tables become labelled records. No browser automation or npm dependency is required by the application at runtime.
+
+All filtered rows are exported; structured personal fields are omitted and bank account numbers remain masked. Report definitions and current-versus-period semantics are included in each export. Large-volume queries currently reuse existing in-memory register readers; Phase 6 profiling determines whether storage-level pagination/indexing is needed.
+
 `public/reconciliation.js` shares the existing UI helpers. A local worker runs vendored SheetJS 0.20.3 with a 15-second timeout, 2 MB file limit and bounded row reading. Files, worksheet selection and mapped rows are reviewed before import. The source file is encrypted and retained with its SHA-256 hash; no supplied filename becomes a filesystem path. Statement JSON bodies allow 5 MB and tax-evidence bodies 3 MB; ordinary writes retain 64 KB limits. Downloads remain attachments with nosniff and sandbox CSP. No remote assets, formula execution or login are introduced.

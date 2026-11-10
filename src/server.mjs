@@ -4,12 +4,14 @@ import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Store, LOCAL_ACTOR } from "./store.mjs";
 import { AppError, demand, kinds } from "./domain.mjs";
+import { report, search, trace, dashboard, reportCatalog } from "./reports.mjs";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const assets = {
   "/": ["index.html", "text/html"],
   "/app.js": ["app.js", "text/javascript"],
   "/payments.js": ["payments.js", "text/javascript"],
   "/reconciliation.js": ["reconciliation.js", "text/javascript"],
+  "/reports.js": ["reports.js", "text/javascript"],
   "/statement-worker.js": ["statement-worker.js", "text/javascript"],
   "/vendor/xlsx.full.min.js": ["vendor/xlsx.full.min.js", "text/javascript"],
   "/styles.css": ["styles.css", "text/css"],
@@ -112,6 +114,55 @@ export function createApp(store) {
           data && typeof data === "object" && !Array.isArray(data),
           "Use a JSON object.",
         );
+      }
+      if (
+        req.method === "GET" &&
+        [
+          "/api/reports",
+          "/api/search",
+          "/api/dashboard",
+          "/api/report-catalog",
+          "/api/trace",
+        ].includes(path)
+      ) {
+        const query = Object.fromEntries(url.searchParams);
+        send(
+          200,
+          path === "/api/report-catalog"
+            ? reportCatalog
+            : path === "/api/reports"
+              ? report(store, actor, query)
+              : path === "/api/search"
+                ? search(store, actor, query)
+                : path === "/api/dashboard"
+                  ? dashboard(store, actor, query)
+                  : trace(store, actor, query.id || ""),
+        );
+        return;
+      }
+      if (path === "/api/report-export" && req.method === "POST") {
+        demand(
+          ["xlsx", "print"].includes(data.format),
+          "Unknown export format.",
+        );
+        const result = report(store, actor, data.filters || {});
+        store.audit(
+          actor,
+          "Report export prepared",
+          null,
+          result.filters.society || null,
+          "",
+          null,
+          {
+            type: result.type,
+            format: data.format,
+            filters: result.filters,
+            rows: result.rows.length,
+            generatedAt: result.generatedAt,
+          },
+        );
+        send(200, result);
+        return;
       }
       if (path === "/api/bank-book" && req.method === "GET") {
         send(200, store.bankBook(actor));

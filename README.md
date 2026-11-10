@@ -52,7 +52,7 @@ UI tests use Edge on Windows or Playwright Chromium elsewhere (`npx playwright i
 
 ## Delivery
 
-See the [six-phase roadmap](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), [design](DESIGN.md), and [Phase 4 verification](docs/PHASE4-VERIFICATION.md). Phase 5 reports await the owner's review.
+See the [six-phase roadmap](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), [design](DESIGN.md), and [Phase 5 verification](docs/PHASE5-VERIFICATION.md). Phase 6 release validation awaits the owner's review.
 
 ## Record a receipt
 
@@ -85,3 +85,13 @@ Under **Reconciled periods**, lock only when every statement/book movement is ma
 ## Track tax separately
 
 First configure **Tax treatments** using actual accountant-confirmed rates, basis, evidence reference and effective date. No rate is assumed. Under **Tax register**, add a record linked to its Society/project and optionally its actual receipt, attach certificate/ledger evidence and review the expected calculation. An override needs a reason. Append credits, set-offs, disputes or adjustments with evidence; set-offs cannot exceed available credit. Tax credits and bank annotations never create bank cash or receipt funding.
+
+## Dashboard, search and reports
+
+Open **Financial dashboard** for period cash and current receipt/tax positions. Choose an Indian financial year (April–March), month, custom period or all dates. Cash uses bank movement dates; reversals appear on their own dates. Current positions are labelled separately.
+
+Use **Search & Payment ID 360** for exact Payment IDs or partial names/references, with scope, status and amount filters. Open a receipt result for its linked payments, evidence, allocations, tax, reconciliation and chronological activity. Posted receipt details also link directly to Payment ID 360.
+
+Under **Reports & exports**, select a report and apply its relevant filters. Totals cover all matching rows; the screen shows 25 at a time. **Export Excel (.xlsx)** creates a local workbook with report definitions and numeric amounts. **Print / save PDF** opens the browser print dialog: choose the offline **Save as PDF** destination or your printer. Reports include page numbers, period, filters, generation time and totals; bank accounts remain masked. No online conversion service is used.
+
+See [Phase 5 verification](docs/PHASE5-VERIFICATION.md) for exact date, reversal, current-balance and export rules. Portable distribution, backup/restore and full release acceptance remain Phase 6.
