@@ -221,6 +221,7 @@ export const receiptMethods = {
         "Confirm that this credit appears in the bank account.",
       );
       const society = validateLinks(this, receipt, true);
+      this.assertPeriodOpen(receipt.bankId, receipt.creditDate);
       demand(receipt.amount > 0, "Credited amount must be greater than zero.");
       demand(
         receipt.creditDate && receipt.valueDate,

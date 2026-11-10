@@ -439,7 +439,7 @@ test("version 2 upgrade preserves encrypted receipts, master IDs and audit histo
   try {
     assert.equal(
       upgraded.db.prepare("PRAGMA user_version").get().user_version,
-      3,
+      4,
     );
     assert.equal(upgraded.receipt(r.id).paymentId, r.paymentId);
     assert.equal(
@@ -546,7 +546,7 @@ test("HTTP concurrent tabs recheck allocation and expose only local attachment d
     assert.equal(reopened.bankBook()[0].balance, 12000);
     assert.equal(
       reopened.db.prepare("PRAGMA user_version").get().user_version,
-      3,
+      4,
     );
   } finally {
     reopened.close();

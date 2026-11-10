@@ -1,0 +1,3 @@
+reviews:
+  path_filters:
+    - "!public/vendor/xlsx.full.min.js"

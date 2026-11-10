@@ -39,3 +39,11 @@ Evidence is local encrypted SQLite content with the same bounded PDF/PNG/JPEG at
 ### Phase 3 verification
 
 Domain/store tests cover amounts, dates, relationships, duplicate controls, IDs, history, encryption, revision conflicts and persistence after restart. HTTP tests cover login-free access and cross-site/Host rejection. Browser tests create a complete master chain with external network requests blocked, verify fragment links preserve form input, and inspect desktop/mobile/landscape accessibility and overflow.
+
+## Phase 4 reconciliation and tax
+
+Schema 4 adds encrypted statement imports/lines, reconciliation links/exceptions, immutable other bank movements, period locks, effective tax treatments, tax records/events/evidence. Matching, capacity checks, lock/reopen and tax events execute under `BEGIN IMMEDIATE`. Voided matches and reopened lock records remain present with audit history. Existing posting/reversal entry points check period locks before mutation; bank opening fields also lock once statement or adjustment history exists.
+
+The bank book assigns stable movement keys to receipts, payments, reversals and adjustments. Matching totals belong to those keys, independently of receipt allocations. Reconciliation never changes cash. Bank charges affect only bank cash; tax records affect neither cash nor receipt funding. Tax events use insertion order even when timestamps tie.
+
+`public/reconciliation.js` shares the existing UI helpers. A local worker runs vendored SheetJS 0.20.3 with a 15-second timeout, 2 MB file limit and bounded row reading. Files, worksheet selection and mapped rows are reviewed before import. The source file is encrypted and retained with its SHA-256 hash; no supplied filename becomes a filesystem path. Statement JSON bodies allow 5 MB and tax-evidence bodies 3 MB; ordinary writes retain 64 KB limits. Downloads remain attachments with nosniff and sandbox CSP. No remote assets, formula execution or login are introduced.

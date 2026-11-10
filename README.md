@@ -52,7 +52,7 @@ UI tests use Edge on Windows or Playwright Chromium elsewhere (`npx playwright i
 
 ## Delivery
 
-See the [six-phase roadmap](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), [design](DESIGN.md), and [Phase 3 verification](docs/PHASE3-VERIFICATION.md). Statement reconciliation and tax registers begin in Phase 4, after the owner's review.
+See the [six-phase roadmap](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), [design](DESIGN.md), and [Phase 4 verification](docs/PHASE4-VERIFICATION.md). Phase 5 reports await the owner's review.
 
 ## Record a receipt
 
@@ -60,7 +60,7 @@ Open **Government receipts → Record receipt**. Select the Society, department,
 
 Attach local PDF, PNG or JPEG bank evidence (maximum five files, 2 MB each). Review the receipt and confirm the bank credit to post it. All project/bank mappings, dates, positive amount and evidence must be complete. Electronic transfers require a reference, cheques require a cheque number, and Other requires narration. Possible duplicates require explicit confirmation and a documented reason.
 
-Posting assigns `LSP-SOCIETY-FY-SEQUENCE` using the **credit date's** Indian financial year and adds only the credited amount to the bank book. Gross bill, GST deductions and tax credits are informational, never cash. Evidence is encrypted in the same local database. Posted receipts and evidence are locked. Bank opening balance/date/account number cannot change once credits have posted. Bank balances include opening balances, receipt credits, payment debits and reversals; they are not yet reconciled statement balances.
+Posting assigns `LSP-SOCIETY-FY-SEQUENCE` using the **credit date's** Indian financial year and adds only the credited amount to the bank book. Gross bill, GST deductions and tax credits are informational, never cash. Evidence is encrypted in the same local database. Posted receipts and evidence are locked. Bank opening balance/date/account number cannot change once credits have posted. Bank balances include opening balances, receipt credits, payment debits and reversals; use Bank reconciliation to match them to statement evidence.
 
 ## Claims, payments and corrections
 
@@ -72,4 +72,16 @@ Posting assigns `LSP-SOCIETY-FY-SEQUENCE` using the **credit date's** Indian fin
 
 Funding is restricted to posted receipts in the **same Society, project and bank account**, with no unfunded residual. Draft/submitted/approved payments do not reserve funds. Posting atomically rechecks receipt and claim capacity, exact allocation/distribution totals, duplicate bank references and bank-book balances. Same-amount/date debits require an explicit duplicate override reason; a reused bank reference/cheque is blocked.
 
-A receipt can be reversed only after all its linked payments are reversed. Movements cannot precede their source credit, and released funding cannot be used before the latest linked reversal date. Backdated movements that would make a historical or later bank-book balance negative are rejected. Cash mode must represent an evidenced bank-funded debit/withdrawal; this is not a separate petty-cash ledger. Tax deductions are recorded on claims; statutory tax-register workflows remain Phase 4.
+A receipt can be reversed only after all its linked payments are reversed. Movements cannot precede their source credit, and released funding cannot be used before the latest linked reversal date. Backdated movements that would make a historical or later bank-book balance negative are rejected. Cash mode must represent an evidenced bank-funded debit/withdrawal; this is not a separate petty-cash ledger. Tax deductions are recorded on claims; separate tax treatment and credit registers are available without statutory filing automation.
+
+## Reconcile a bank period
+
+Open **Bank reconciliation → Import statement**. Choose a bank, statement dates and opening/closing balances. Select a local CSV/Excel file or enter CSV rows, read it, select the worksheet and map columns. Use separate Debit and Credit columns (unused values may be blank), a header and ascending dates. Preview, review and confirm the import. The limit is 2 MB and 2,000 rows; split larger statements into consecutive periods with carried balances.
+
+Review each statement line and link one or more posted bank-book movements. Partial matches are supported; different dates/references need a reason. Record missing bank fees/interest under **Other bank movements**. These movements do not create receipt funds. Track unresolved differences with an owner annotation, reason and exception status.
+
+Under **Reconciled periods**, lock only when every statement/book movement is matched, exceptions resolved and statement balances agree. Locks protect earlier balances too. Reopening needs a documented reason and local confirmation, latest locked period first. Removed matches and corrections retain history.
+
+## Track tax separately
+
+First configure **Tax treatments** using actual accountant-confirmed rates, basis, evidence reference and effective date. No rate is assumed. Under **Tax register**, add a record linked to its Society/project and optionally its actual receipt, attach certificate/ledger evidence and review the expected calculation. An override needs a reason. Append credits, set-offs, disputes or adjustments with evidence; set-offs cannot exceed available credit. Tax credits and bank annotations never create bank cash or receipt funding.

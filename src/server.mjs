@@ -9,6 +9,9 @@ const assets = {
   "/": ["index.html", "text/html"],
   "/app.js": ["app.js", "text/javascript"],
   "/payments.js": ["payments.js", "text/javascript"],
+  "/reconciliation.js": ["reconciliation.js", "text/javascript"],
+  "/statement-worker.js": ["statement-worker.js", "text/javascript"],
+  "/vendor/xlsx.full.min.js": ["vendor/xlsx.full.min.js", "text/javascript"],
   "/styles.css": ["styles.css", "text/css"],
   "/tokens.css": ["tokens.css", "text/css"],
   "/base.css": ["base.css", "text/css"],
@@ -92,9 +95,13 @@ export function createApp(store) {
         );
         const body = await readRequestBody(
           req,
-          /^\/api\/(receipts|payments)\/[\w-]+\/evidence$/.test(path)
-            ? 3 * 1024 * 1024
-            : 65536,
+          /^\/api\/statements\/(preview|import)$/.test(path)
+            ? 5 * 1024 * 1024
+            : /^\/api\/tax(?:\/[\w-]+\/events)?$/.test(path)
+              ? 3 * 1024 * 1024
+              : /^\/api\/(receipts|payments)\/[\w-]+\/evidence$/.test(path)
+                ? 3 * 1024 * 1024
+                : 65536,
         );
         try {
           data = JSON.parse(body || "{}");
@@ -109,6 +116,110 @@ export function createApp(store) {
       if (path === "/api/bank-book" && req.method === "GET") {
         send(200, store.bankBook(actor));
         return;
+      }
+      if (path === "/api/reconciliation-movements" && req.method === "GET") {
+        send(200, store.reconciliationMovements(url.searchParams.get("bank")));
+        return;
+      }
+      const lineRoute = path.match(
+        /^\/api\/statement-(lines|links)\/([\w-]+)(?:\/(match|exception|unmatch))?$/,
+      );
+      if (lineRoute) {
+        const [, kind, id, action] = lineRoute;
+        if (req.method === "GET" && kind === "lines" && !action) {
+          send(200, store.statementLine(id));
+          return;
+        }
+        if (req.method === "POST") {
+          if (kind === "lines" && action === "match") {
+            send(200, store.matchStatement(actor, id, data));
+            return;
+          }
+          if (kind === "lines" && action === "exception") {
+            send(200, store.saveException(actor, id, data));
+            return;
+          }
+          if (kind === "links" && action === "unmatch") {
+            send(200, store.unmatchStatement(actor, id, data));
+            return;
+          }
+        }
+      }
+      const phase4 = path.match(
+        /^\/api\/(statements|tax|taxrules|bankmovements|periods)(?:\/([\w-]+))?(?:\/(source|events|evidence|reopen)(?:\/([\w-]+))?)?$/,
+      );
+      if (phase4) {
+        const [, kind, id, action, fileId] = phase4;
+        if (req.method === "GET" && !action) {
+          const result =
+            kind === "statements"
+              ? id
+                ? store.statementImport(id)
+                : store.statementImports()
+              : kind === "tax"
+                ? id
+                  ? store.taxRecord(id)
+                  : store.taxes()
+                : kind === "taxrules"
+                  ? store.taxRules()
+                  : kind === "bankmovements"
+                    ? store.otherMovements()
+                    : store.periods();
+          send(200, result);
+          return;
+        }
+        if (
+          req.method === "GET" &&
+          id &&
+          ((kind === "statements" && action === "source") ||
+            (kind === "tax" && action === "evidence" && fileId))
+        ) {
+          const file =
+            kind === "statements"
+              ? store.statementSource(id)
+              : store.taxEvidence(id, fileId);
+          res.writeHead(200, {
+            "Content-Type": file.type || "application/octet-stream",
+            "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+            "Content-Security-Policy": "sandbox; default-src 'none'",
+          });
+          res.end(Buffer.from(file.data, "base64"));
+          return;
+        }
+        if (req.method === "POST") {
+          if (kind === "statements" && id === "preview" && !action) {
+            send(200, store.previewStatement(data));
+            return;
+          }
+          if (kind === "statements" && id === "import" && !action) {
+            send(201, store.importStatement(actor, data));
+            return;
+          }
+          if (!id) {
+            const result =
+              kind === "tax"
+                ? store.saveTaxRecord(actor, data)
+                : kind === "taxrules"
+                  ? store.saveTaxRule(actor, data)
+                  : kind === "bankmovements"
+                    ? store.saveBankMovement(actor, data)
+                    : kind === "periods"
+                      ? store.lockPeriod(actor, data)
+                      : null;
+            if (result) {
+              send(201, result);
+              return;
+            }
+          }
+          if (id && kind === "tax" && action === "events") {
+            send(200, store.addTaxEvent(actor, id, data));
+            return;
+          }
+          if (id && kind === "periods" && action === "reopen") {
+            send(200, store.reopenPeriod(actor, id, data));
+            return;
+          }
+        }
       }
       const finance = path.match(
         /^\/api\/(claims|payments)(?:\/([\w-]+))?(?:\/(approve|submit|post|return|cancel|fail|reverse|evidence)(?:\/([\w-]+))?)?$/,

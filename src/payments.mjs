@@ -564,6 +564,7 @@ export const paymentMethods = {
       }
       let ref = p.ref;
       if (action === "post") {
+        this.assertPeriodOpen(p.bankId, p.paymentDate);
         const others = this.payments().filter(
           (x) => x.id !== id && x.status === "Posted" && x.bankId === p.bankId,
         );
@@ -709,6 +710,7 @@ export const paymentMethods = {
         );
       }
       const amount = kind === "receipts" ? -source.amount : source.amount;
+      this.assertPeriodOpen(source.bankId, day);
       this.assertBankMovement(source.bankId, day, amount);
       const outcome =
         raw.outcome === "Failed" && kind === "payments" ? "Failed" : "Reversed";
@@ -777,7 +779,7 @@ export const paymentMethods = {
     const eventOrder = new Map(
       this.db
         .prepare(
-          "SELECT id,entity_id,action FROM audit WHERE action IN ('Receipt posted','Payment posted','Receipt reversed','Payment reversed','Payment failed') ORDER BY id",
+          "SELECT id,entity_id,action FROM audit WHERE action IN ('Receipt posted','Payment posted','Receipt reversed','Payment reversed','Payment failed','Bank adjustment posted') ORDER BY id",
         )
         .all()
         .map((e) => [`${e.entity_id}:${e.action}`, e.id]),
@@ -790,6 +792,16 @@ export const paymentMethods = {
       .prepare("SELECT * FROM reversals")
       .all()
       .map((row) => ({ ...row, ...decrypt(row.payload, this.key) }));
+    const receiptReferences = new Map(
+      this.db
+        .prepare("SELECT id,payload FROM receipts")
+        .all()
+        .map((r) => {
+          const d = decrypt(r.payload, this.key);
+          return [r.id, d.reference || d.chequeNumber || ""];
+        }),
+    );
+    const adjustments = this.otherMovements();
     return this.list(actor, "banks").map((bank) => {
       const entries = this.db
         .prepare(
@@ -801,6 +813,8 @@ export const paymentMethods = {
           page: "receipts",
           entity_id: e.receipt_id,
           event: "Receipt",
+          movement_key: `receipt:${e.receipt_id}`,
+          reference: receiptReferences.get(e.receipt_id),
           order: eventOrder.get(`${e.receipt_id}:Receipt posted`) || 0,
         }));
       for (const p of payments.filter((p) => p.bankId === bank.id))
@@ -812,6 +826,8 @@ export const paymentMethods = {
           page: "payments",
           entity_id: p.id,
           event: "Payment",
+          movement_key: `payment:${p.id}`,
+          reference: p.reference || p.chequeNumber || "",
           order: eventOrder.get(`${p.id}:Payment posted`) || 0,
         });
       for (const r of reversals.filter((r) => r.bankId === bank.id))
@@ -823,10 +839,25 @@ export const paymentMethods = {
           page: r.kind,
           entity_id: r.source_id,
           event: r.outcome,
+          movement_key: `reversal:${r.id}`,
+          reference: r.reference,
           order:
             eventOrder.get(
               `${r.source_id}:${r.kind === "payments" ? "Payment" : "Receipt"} ${r.outcome.toLowerCase()}`,
             ) || 0,
+        });
+      for (const m of adjustments.filter((m) => m.bankId === bank.id))
+        entries.push({
+          credit_date: m.date,
+          amount: m.amount,
+          payment_id: m.ref,
+          created_at: m.createdAt,
+          page: "bankmovements",
+          entity_id: m.id,
+          event: m.reversalOf ? "Adjustment reversal" : m.category,
+          movement_key: `adjustment:${m.id}`,
+          reference: m.reference,
+          order: eventOrder.get(`${m.id}:Bank adjustment posted`) || 0,
         });
       entries.sort(
         (a, b) =>

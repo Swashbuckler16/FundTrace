@@ -683,6 +683,15 @@ input[readonly] {
 .finance-section {
   margin-top: var(--space-xl);
 }
+#statement-form > label,
+#statement-form > button,
+#column-mapping:not(:empty),
+#column-mapping > .form-grid {
+  margin-top: var(--space-lg);
+}
+#column-mapping h2 {
+  margin-bottom: var(--space-md);
+}
 .funding-row {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;

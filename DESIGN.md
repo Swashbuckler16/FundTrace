@@ -1,5 +1,7 @@
 # FundTrace interface system
 
+Phase 4 continues the locked system with statement import/preview, reconciliation matching, bank adjustments, period locks and separate tax registers. Use scoped field IDs across adjacent forms, preserve invalid input, and invalidate previews when source inputs change. Match options wrap the selected reference and remaining amount below the control. Tax event forms enable only applicable fields; attachment links include purpose and evidence reference. Tables carry precise INR amounts and mobile labels; charts are not required for these operational tasks.
+
 Mode: Operate. The signature object is a Society-linked master register with immutable IDs and adjacent change history. The owner approved a restrained utilitarian finance workspace.
 
 Hallmark dealt Console, Furrow and Dose. Furrow was selected for its warm paper, crisp record rows and tangerine action; map imagery and marketing layouts do not apply to the app scope. Font: system Segoe UI, deliberately permitted by Hallmark's app-screen rules and available offline. One accent marks actions/selections; green labels express active status with text. All colors and fonts live in CSS tokens.

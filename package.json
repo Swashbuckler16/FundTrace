@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Offline Labour Society funds tracking \u2014 Phase 1 foundation",
+  "description": "Offline Labour Society funds tracking",
   "engines": {
     "node": ">=24.14.0"
   },
@@ -11,8 +11,8 @@
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",
     "test": "node --test test/*.test.mjs",
-    "check": "node --check src/server.mjs && node --check src/store.mjs && node --check src/receipts.mjs && node --check src/payments.mjs && node --check public/app.js && node --check public/payments.js",
-    "test:ui": "node scripts/ui-test.mjs"
+    "check": "node --check src/server.mjs && node --check src/store.mjs && node --check src/receipts.mjs && node --check src/payments.mjs && node --check public/app.js && node --check public/payments.js && node --check src/reconciliation.mjs && node --check src/tax.mjs && node --check public/reconciliation.js && node --check public/statement-worker.js",
+    "test:ui": "node scripts/ui-test.mjs && node scripts/phase4-ui-test.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.1",

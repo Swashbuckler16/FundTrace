@@ -3,6 +3,7 @@ import {
   financialReversalForm,
   bindFinancialReversal,
 } from "./payments.js";
+import { renderReconciliation } from "./reconciliation.js";
 const financeUI = () => ({
   api,
   esc,
@@ -28,6 +29,11 @@ const titles = {
   claims: "Claims & instalments",
   payments: "Outward payments",
   bankbook: "Bank book",
+  reconciliation: "Bank reconciliation",
+  bankmovements: "Other bank movements",
+  periods: "Reconciled periods",
+  tax: "Tax register",
+  taxrules: "Tax treatments",
   societies: "Societies",
   departments: "Departments",
   projects: "Projects & work orders",
@@ -49,6 +55,11 @@ const icons = {
   claims: "M5 3h14v18H5zM8 7h8m-8 5h8m-8 5h4",
   payments: "M3 6h18v14H3zM3 10h18m-8 5h5m-2-2 2 2-2 2",
   bankbook: "M3 4h8l1 2 1-2h8v16h-8l-1 2-1-2H3zM12 6v16",
+  reconciliation: "M4 3h16v18H4zM7 8l2 2 4-4m-6 9 2 2 4-4m2-4h2m-2 7h2",
+  bankmovements: "M3 7h16m-4-4 4 4-4 4M21 17H5m4-4-4 4 4 4",
+  periods: "M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4",
+  tax: "M4 3h16v18H4zM8 8h8m-8 4h8m-8 4h4",
+  taxrules: "M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6m-6 0v6",
   societies: "M4 21V7l8-4 8 4v14 M9 21v-5h6v5 M8 9h1m6 0h1M8 12h1m6 0h1",
   departments: "M3 21h18M5 18V9m7 9V9m7 9V9M3 6l9-4 9 4z",
   projects: "M3 7h7l2 2h9v11H3z M3 7V4h7l2 3",
@@ -214,7 +225,7 @@ function overview() {
       )
       .join(
         "",
-      )}</div><section class="onboarding"><h2>Set up your Society workspace</h2><p>Follow the record links below. Your changes are saved with an audit trail.</p><ol class="steps">${steps.map(([kind, title, description], i) => `<li><span>${i + 1}</span><div><h3>${title}</h3><p>${description}</p></div><a class="button quiet" href="${href(kind)}">${records[kind].length ? "View records" : "Open register"}</a></li>`).join("")}</ol></section><p class="notice">Posted receipt credits are available in the bank book. Claims and payments are ready; statement reconciliation follows in Phase 4. All records work without internet.</p>`
+      )}</div><section class="onboarding"><h2>Set up your Society workspace</h2><p>Follow the record links below. Your changes are saved with an audit trail.</p><ol class="steps">${steps.map(([kind, title, description], i) => `<li><span>${i + 1}</span><div><h3>${title}</h3><p>${description}</p></div><a class="button quiet" href="${href(kind)}">${records[kind].length ? "View records" : "Open register"}</a></li>`).join("")}</ol></section><p class="notice">Posted receipt credits are available in the bank book. Claims, payments, statement reconciliation and separate tax records are ready. All records work without internet.</p>`
   );
 }
 function register(kind, r) {
@@ -432,6 +443,16 @@ async function render() {
     else if (page === "claims" || page === "payments")
       await renderFinance(main, r, financeUI());
     else if (page === "bankbook") await renderBankBook(main);
+    else if (
+      [
+        "reconciliation",
+        "bankmovements",
+        "periods",
+        "tax",
+        "taxrules",
+      ].includes(page)
+    )
+      await renderReconciliation(main, r, financeUI());
     else if (fields[page]) {
       if (r.create || r.edit) {
         const record = r.id

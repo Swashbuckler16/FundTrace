@@ -13,6 +13,11 @@ import {
 import { encrypt, decrypt, redact } from "./security.mjs";
 import { initializeReceipts, receiptMethods } from "./receipts.mjs";
 import { initializePayments, paymentMethods } from "./payments.mjs";
+import {
+  initializeReconciliation,
+  reconciliationMethods,
+} from "./reconciliation.mjs";
+import { initializeTax, taxMethods } from "./tax.mjs";
 export const LOCAL_ACTOR = Object.freeze({
   id: "local-workspace",
   name: "Local workspace",
@@ -63,6 +68,8 @@ export class Store {
       `);
     initializeReceipts(this);
     initializePayments(this);
+    initializeReconciliation(this);
+    initializeTax(this);
   }
   close() {
     this.db.close();
@@ -163,17 +170,12 @@ export class Store {
           409,
         );
         const before = decrypt(old.payload, this.key);
-        if (
-          kind === "banks" &&
-          this.db
-            .prepare("SELECT 1 FROM bank_entries WHERE bank_id=? LIMIT 1")
-            .get(id)
-        ) {
+        if (kind === "banks" && this.hasBankHistory(id)) {
           demand(
             data.openingBalance === before.openingBalance &&
               data.openingDate === before.openingDate &&
               data.accountNumber === before.accountNumber,
-            "Bank opening balance, date and account number are locked after posting receipts.",
+            "Bank opening balance, date and account number are locked once financial history exists.",
           );
         }
         demand(
@@ -319,3 +321,4 @@ export class Store {
 }
 Object.assign(Store.prototype, receiptMethods);
 Object.assign(Store.prototype, paymentMethods);
+Object.assign(Store.prototype, reconciliationMethods, taxMethods);
