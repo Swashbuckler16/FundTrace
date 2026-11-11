@@ -5,6 +5,7 @@ import {
 } from "./payments.js";
 import { renderReconciliation } from "./reconciliation.js";
 import { renderReports } from "./reports.js";
+import { renderRecovery } from "./recovery.js";
 const financeUI = () => ({
   api,
   esc,
@@ -25,6 +26,7 @@ const app = document.querySelector("#app");
 let records = {},
   renderVersion = 0;
 const titles = {
+  recovery: "Backup & recovery",
   dashboard: "Financial dashboard",
   search: "Search & Payment ID 360",
   reports: "Reports & exports",
@@ -75,6 +77,7 @@ const icons = {
     "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M18 8a3 3 0 0 1 0 6m4 7v-2a4 4 0 0 0-3-4",
   audit: "M12 8v5l3 2M21 12a9 9 0 1 1-3-6M21 3v6h-6",
   numbering: "M5 4h14v16H5zM9 8h6m-6 4h6m-6 4h3",
+  recovery: "M4 3h14l3 3v15H3V3zM7 3v6h10V3M7 21v-8h10v8",
 };
 const esc = (value) =>
   String(value ?? "").replace(
@@ -447,6 +450,7 @@ async function render() {
     if (current !== renderVersion) return;
     records = Object.fromEntries(lists);
     if (page === "overview") main.innerHTML = overview();
+    else if (page === "recovery") await renderRecovery(main, financeUI());
     else if (["dashboard", "search", "reports", "trace"].includes(page))
       await renderReports(main, r, financeUI());
     else if (page === "receipts") await renderReceipts(main, r);

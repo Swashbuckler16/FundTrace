@@ -1,6 +1,6 @@
 {
   "name": "fundtrace",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Offline Labour Society funds tracking",
@@ -11,8 +11,9 @@
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",
     "test": "node --test test/*.test.mjs",
-    "check": "node --check src/server.mjs && node --check src/store.mjs && node --check src/receipts.mjs && node --check src/payments.mjs && node --check public/app.js && node --check public/payments.js && node --check src/reconciliation.mjs && node --check src/tax.mjs && node --check public/reconciliation.js && node --check public/statement-worker.js && node --check src/reports.mjs && node --check public/reports.js",
-    "test:ui": "node scripts/ui-test.mjs && node scripts/phase4-ui-test.mjs && node scripts/phase5-ui-test.mjs"
+    "check": "node --check src/server.mjs && node --check src/store.mjs && node --check src/receipts.mjs && node --check src/payments.mjs && node --check public/app.js && node --check public/payments.js && node --check src/reconciliation.mjs && node --check src/tax.mjs && node --check public/reconciliation.js && node --check public/statement-worker.js && node --check src/reports.mjs && node --check public/reports.js && node --check src/recovery.mjs && node --check public/recovery.js && node --check scripts/recovery.mjs",
+    "test:ui": "node scripts/ui-test.mjs && node scripts/phase4-ui-test.mjs && node scripts/phase5-ui-test.mjs && node scripts/phase6-ui-test.mjs",
+    "test:performance": "node scripts/release-benchmark.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.1",

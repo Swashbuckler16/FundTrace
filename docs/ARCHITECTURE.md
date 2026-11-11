@@ -1,4 +1,14 @@
-# Offline architecture, Phases 1–3
+# Offline architecture, Phases 1–6
+
+## Phase 6 recovery and distribution
+
+`src/recovery.mjs` creates consistent live SQLite snapshots using parameterized `VACUUM INTO`, includes the active encryption key, verifies SHA-256/integrity/foreign keys and decrypts every payload before publishing a dated backup directory. Failed snapshots are removed; abrupt process termination or cleanup failure may leave `.pending-…` folders, never listed as completed. SQLite documents this as a supported live-snapshot technique: https://sqlite.org/backup.html. The synchronous path avoids another package; measured backup pause was 1.01 seconds at 1,000 receipts/100 payments on the development machine. Larger evidence-heavy workspaces require profiling before increasing volume.
+
+Startup and an hourly check make an automatic copy once the latest completed backup is at least 24 hours old. The recovery page exposes last-copy dates, paths and errors, plus a same-origin confirmed manual backup. Retention is explicitly manual/unbounded; nothing deletes financial data or backups. Copies include their key and must be protected as private records.
+
+The server and restore tool acquire an exclusive workspace lock using a canonical filesystem path. Stale locks require an explicit process-liveness-checked unlock. Restore validates a staged copy, adds an audit event, preserves the old directory (including WAL/key), and renames the staged workspace into place. A pending-recovery marker blocks app startup after an interrupted swap; a verified retry clears it. Directory renames and retained originals provide recoverability, not a guarantee against filesystem/hardware failure. No live restore API is exposed.
+
+The Windows package contains source, local assets and a checksum-verified Node 24.20.0 executable with its license/provenance. No npm packages, workspace data, screenshots or development dependencies are distributed. `Start FundTrace.cmd` prefers that bundled executable. CI builds the ZIP on Windows and checks startup, duplicate launch rejection, persistence, crash unlock and CLI restore with PATH empty. Browser suites separately block external requests; physically disconnected owner UAT remains explicit.
 
 Browser on this computer → loopback-only HTTP/JSON → validation → transactional local SQLite.
 

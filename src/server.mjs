@@ -5,6 +5,12 @@ import { fileURLToPath } from "node:url";
 import { Store, LOCAL_ACTOR } from "./store.mjs";
 import { AppError, demand, kinds } from "./domain.mjs";
 import { report, search, trace, dashboard, reportCatalog } from "./reports.mjs";
+import {
+  createBackup,
+  listBackups,
+  backupRoot,
+  lockWorkspace,
+} from "./recovery.mjs";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const assets = {
   "/": ["index.html", "text/html"],
@@ -12,6 +18,7 @@ const assets = {
   "/payments.js": ["payments.js", "text/javascript"],
   "/reconciliation.js": ["reconciliation.js", "text/javascript"],
   "/reports.js": ["reports.js", "text/javascript"],
+  "/recovery.js": ["recovery.js", "text/javascript"],
   "/statement-worker.js": ["statement-worker.js", "text/javascript"],
   "/vendor/xlsx.full.min.js": ["vendor/xlsx.full.min.js", "text/javascript"],
   "/styles.css": ["styles.css", "text/css"],
@@ -30,7 +37,7 @@ export async function readRequestBody(stream, limit = 65536) {
   return Buffer.concat(chunks).toString("utf8");
 }
 
-export function createApp(store) {
+export function createApp(store, recovery = {}) {
   return createServer(async (req, res) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "same-origin");
@@ -138,6 +145,28 @@ export function createApp(store) {
                   ? dashboard(store, actor, query)
                   : trace(store, actor, query.id || ""),
         );
+        return;
+      }
+      if (path === "/api/recovery" && req.method === "GET") {
+        send(200, {
+          directory: store.directory,
+          backupDirectory: backupRoot(store.directory),
+          backups: listBackups(store.directory),
+          automaticError: recovery.error || null,
+        });
+        return;
+      }
+      if (path === "/api/backups" && req.method === "POST") {
+        demand(
+          data.confirm === true,
+          "Confirm that backup folders contain private financial records and their encryption key.",
+        );
+        const result = createBackup(store);
+        recovery.error = null;
+        store.audit(actor, "Local backup verified", null, null, "", null, {
+          name: result.name,
+        });
+        send(201, result);
         return;
       }
       if (path === "/api/report-export" && req.method === "POST") {
@@ -427,15 +456,53 @@ if (
   process.argv[1] &&
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
-  const store = new Store(process.env.FUNDTRACE_DATA_DIR || join(root, "data"));
+  const directory = process.env.FUNDTRACE_DATA_DIR || join(root, "data");
+  const release = lockWorkspace(directory);
+  let store;
+  try {
+    store = new Store(directory);
+  } catch (error) {
+    release();
+    throw error;
+  }
   const port = Number(process.env.PORT || 3000);
-  const server = createApp(store);
+  const recovery = {};
+  const automaticBackup = () => {
+    try {
+      const latest = listBackups(directory)[0];
+      if (
+        !latest ||
+        Date.now() - Date.parse(latest.createdAt) >= 24 * 60 * 60 * 1000
+      )
+        createBackup(store);
+      recovery.error = null;
+    } catch (error) {
+      recovery.error =
+        "Automatic backup failed. Check free disk space and folder permissions, then create a backup here.";
+      console.error("Backup failed:", error.message);
+    }
+  };
+  automaticBackup();
+  const timer = setInterval(automaticBackup, 60 * 60 * 1000);
+  timer.unref();
+  const server = createApp(store, recovery);
+  server.on("error", (error) => {
+    clearInterval(timer);
+    store.close();
+    release();
+    console.error(`Could not start FundTrace: ${error.message}`);
+    process.exitCode = 1;
+  });
   server.listen(port, "127.0.0.1", () =>
-    console.log(`FundTrace offline workspace: http://127.0.0.1:${port}`),
+    console.log(
+      `FundTrace offline workspace: http://127.0.0.1:${server.address().port}`,
+    ),
   );
   const stop = () =>
     server.close(() => {
       store.close();
+      clearInterval(timer);
+      release();
       process.exit(0);
     });
   process.on("SIGINT", stop);

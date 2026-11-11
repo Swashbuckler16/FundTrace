@@ -1,6 +1,6 @@
 # FundTrace
 
-A completely offline Labour Society workspace for tracing Government receipts to beneficiary payments. **Phases 1–3 implement masters, receipts, claims, instalments, labour batches, funding allocations and reversals.** The application opens directly, with no login, passwords, accounts or cloud services.
+A completely offline Labour Society workspace for tracing Government receipts to beneficiary payments. **Includes receipts, payments, reconciliation, tax records, search, reports, verified backups and offline recovery.** The application opens directly, with no login, passwords, accounts or cloud services.
 
 ## Start on this computer
 
@@ -14,7 +14,7 @@ node src/server.mjs
 
 Open [http://127.0.0.1:3000](http://127.0.0.1:3000). Keep the terminal open while using FundTrace; press Ctrl+C to stop. This address is the local computer, not a website on the internet. Disconnecting Wi-Fi or internet does not affect local operation. Start the app again whenever you restart the computer.
 
-Create your Society, department, bank account, project and beneficiaries. Records persist between restarts. No sample financial records are installed. The final Phase 6 distribution will bundle the runtime for offline installation; this development phase uses an installed Node runtime.
+Create your Society, department, bank account, project and beneficiaries. Records persist between restarts. No sample financial records are installed. The Phase 6 Windows x64 portable distribution bundles Node 24.20.0. See [Offline setup and recovery](docs/OFFLINE-GUIDE.md).
 
 ## Local data
 
@@ -27,7 +27,7 @@ node src/server.mjs
 
 Master payloads and before/after snapshots use AES-256-GCM encryption. Names, public IDs and other indexing fields are readable in SQLite. Bank numbers and contact/tax details are masked in general views; **Reveal masked details** displays them and records the action. Anyone who can use this computer can use the app: masking is privacy presentation, not user authorization. The local key does not protect against someone who can read both the key and database.
 
-Keep the database and encryption key together in a private backup. Losing the original key makes encrypted records unreadable. Automated local backup/restore tooling and an offline recovery exercise are Phase 6 requirements. Audit entries say **Local workspace** and do not claim to identify a person.
+Keep the database and encryption key together in a private backup. Losing the original key makes encrypted records unreadable. Use Backup & recovery for verified manual and daily automatic backups; the restore launcher retains the previous workspace. Audit entries say **Local workspace** and do not claim to identify a person.
 
 | Variable             | Default             | Purpose                                         |
 | -------------------- | ------------------- | ----------------------------------------------- |
@@ -52,7 +52,7 @@ UI tests use Edge on Windows or Playwright Chromium elsewhere (`npx playwright i
 
 ## Delivery
 
-See the [six-phase roadmap](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), [design](DESIGN.md), and [Phase 5 verification](docs/PHASE5-VERIFICATION.md). Phase 6 release validation awaits the owner's review.
+See the [six-phase roadmap](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), [design](DESIGN.md), and [Phase 5 verification](docs/PHASE5-VERIFICATION.md). See [Phase 6 release verification](docs/PHASE6-VERIFICATION.md) and the owner acceptance checklist in the offline guide.
 
 ## Record a receipt
 
@@ -94,4 +94,4 @@ Use **Search & Payment ID 360** for exact Payment IDs or partial names/reference
 
 Under **Reports & exports**, select a report and apply its relevant filters. Totals cover all matching rows; the screen shows 25 at a time. **Export Excel (.xlsx)** creates a local workbook with report definitions and numeric amounts. **Print / save PDF** opens the browser print dialog: choose the offline **Save as PDF** destination or your printer. Reports include page numbers, period, filters, generation time and totals; bank accounts remain masked. No online conversion service is used.
 
-See [Phase 5 verification](docs/PHASE5-VERIFICATION.md) for exact date, reversal, current-balance and export rules. Portable distribution, backup/restore and full release acceptance remain Phase 6.
+See [Phase 5 verification](docs/PHASE5-VERIFICATION.md) for exact date, reversal, current-balance and export rules. See the offline guide for portable distribution, backup/restore, and final owner acceptance.

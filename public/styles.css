@@ -837,3 +837,34 @@ input[readonly] {
     font-weight: 600;
   }
 }
+
+/* Recovery paths must remain readable in narrow local workspaces. */
+#backup-result,
+.onboarding dd {
+  overflow-wrap: anywhere;
+}
+#backup-form {
+  display: grid;
+  gap: var(--space-4, 1rem);
+  justify-items: start;
+}
+#backup-form .check {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: var(--space-sm);
+}
+#backup-form .check label {
+  grid-column: 2;
+  grid-row: 1;
+}
+#backup-form .check .field-error {
+  grid-column: 2;
+}
+#backup-form input[type="checkbox"] {
+  grid-column: 1;
+  grid-row: 1;
+}
+.recovery-list {
+  margin-block-start: var(--space-lg);
+}

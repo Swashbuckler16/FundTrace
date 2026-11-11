@@ -1,4 +1,4 @@
-name: Foundation checks
+name: Release checks
 on: [push, pull_request]
 permissions:
   contents: read
@@ -22,3 +22,24 @@ jobs:
         with:
           name: ui-verification
           path: artifacts/
+  portable-windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Build checksum-verified offline package
+        shell: pwsh
+        run: ./scripts/build-portable.ps1
+      - name: Test bundled runtime and recovery without Node on PATH
+        shell: pwsh
+        run: |
+          $package = Get-ChildItem artifacts -Directory -Filter 'portable-*' | Select-Object -First 1
+          node scripts/portable-test.mjs (Join-Path $package.FullName 'FundTrace')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FundTrace-Windows-x64
+          path: |
+            artifacts/FundTrace-win-x64-*.zip
+            artifacts/phase6-portable-results.json

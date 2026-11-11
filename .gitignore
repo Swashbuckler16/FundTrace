@@ -1,5 +1,10 @@
 node_modules/
 data/
+data-backups/
+data.lock
+data.restore-pending
+data-before-restore-*/
+.data-restore-*/
 .env
 .env.*
 !.env.example

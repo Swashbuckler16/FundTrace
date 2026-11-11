@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { randomBytes, randomUUID } from "node:crypto";
 import {
   demand,
@@ -25,6 +25,7 @@ export const LOCAL_ACTOR = Object.freeze({
 
 export class Store {
   constructor(directory, keyHex = process.env.FUNDTRACE_KEY) {
+    this.directory = resolve(directory);
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     const keyPath = join(directory, "encryption.key");
     if (!keyHex) {
@@ -50,6 +51,12 @@ export class Store {
     this.db = new DatabaseSync(join(directory, "fundtrace.sqlite"), {
       timeout: 5000,
     });
+    if (this.db.prepare("PRAGMA user_version").get().user_version > 4) {
+      this.db.close();
+      throw new Error(
+        "This workspace needs a newer FundTrace version. Do not downgrade its database.",
+      );
+    }
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;
       CREATE TABLE IF NOT EXISTS records (
         id TEXT PRIMARY KEY, kind TEXT NOT NULL, ref TEXT NOT NULL UNIQUE, name TEXT NOT NULL,
