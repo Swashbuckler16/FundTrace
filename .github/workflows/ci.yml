@@ -41,5 +41,5 @@ jobs:
         with:
           name: FundTrace-Windows-x64
           path: |
-            artifacts/FundTrace-win-x64-*.zip
+            artifacts/FundTrace-v*-win-x64-*.zip
             artifacts/phase6-portable-results.json

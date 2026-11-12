@@ -9,6 +9,18 @@
 
 The address refers only to this computer. All fonts, scripts, Excel processing and storage are local. GitHub and CodeRabbit are development tools and are never contacted by the application. There is no login or claimed independent approval authority: local confirmations and reviewer names are audit annotations.
 
+## Language / भाषा
+
+Open **Settings → Language** and choose **English / मराठी / हिन्दी**, then **Save language**.
+
+मराठी: **सेटिंग्ज → भाषा → मराठी → भाषा जतन करा**. इंटरनेट लागत नाही. तुमच्या नोंदी आणि रक्कम बदलत नाहीत.
+
+हिन्दी: **सेटिंग → भाषा → हिन्दी → भाषा सेव करें**। इंटरनेट नहीं चाहिए। आपके रिकॉर्ड और रकम नहीं बदलते।
+
+The language choice belongs to the browser and local address. Use the same browser and port each time. Clearing browser storage resets it to English. The app bundles all translations; Windows supplies the Devanagari fonts. Browser-owned date pickers, file dialogs and print dialogs use your browser/Windows language. Entered names, references, raw audit snapshots and existing Excel export formats are preserved.
+
+For an upgrade, create a verified backup, close the old app, extract version 2 to a separate folder, then use **Restore FundTrace.cmd** with the backup as described below (or point `FUNDTRACE_DATA_DIR` at your existing private data folder). Do not run both versions against the same workspace. Version 2 requires no financial database migration.
+
 ## Data and backup locations
 
 By default, the application's `data` folder holds the database and encryption key. Attachments are in the database. `data-backups` beside it holds completed backups; a `.pending-…` folder is an incomplete backup and must not be restored. The Backup & recovery page displays the actual absolute paths and completed dates.

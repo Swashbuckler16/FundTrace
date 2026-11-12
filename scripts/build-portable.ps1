@@ -28,7 +28,7 @@ foreach ($name in @('package.json', 'README.md', 'Start FundTrace.cmd', 'Restore
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'recovery.mjs') -Destination (Join-Path $package 'scripts')
 Copy-Item -LiteralPath (Join-Path $repo 'docs\OFFLINE-GUIDE.md') -Destination (Join-Path $package 'READ ME FIRST.txt')
 @{ nodeVersion = $NodeVersion; source = "$base/$runtimeName.zip"; archiveSha256 = $expected; builtAt = (Get-Date).ToUniversalTime().ToString('o') } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $package 'runtime\provenance.json') -Encoding UTF8
-$zip = Join-Path $repo "artifacts\FundTrace-win-x64-$buildId.zip"
+$zip = Join-Path $repo "artifacts\FundTrace-v$((Get-Content (Join-Path $repo 'package.json') -Raw | ConvertFrom-Json).version)-win-x64-$buildId.zip"
 Compress-Archive -LiteralPath $package -DestinationPath $zip
 Write-Output "Portable folder: $package"
 Write-Output "Offline distribution: $zip"

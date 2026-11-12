@@ -102,6 +102,12 @@ const request = async (path, body) => {
 try {
   await start();
   assert.equal((await fetch(origin)).status, 200);
+  for (const asset of ["i18n.js", "languages.js", "language-extra.js"]) {
+    const response = await fetch(`${origin}/${asset}`);
+    assert.equal(response.status, 200, `Bundled translation asset: ${asset}`);
+    assert.match(response.headers.get("content-type"), /javascript/);
+    assert((await response.text()).length > 100);
+  }
   assert.equal(
     (await request("/api/recovery")).backups.length,
     1,

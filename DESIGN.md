@@ -1,5 +1,7 @@
 # FundTrace interface system
 
+Version 2 adds Settings with a native English / मराठी / हिन्दी selector. Local translation catalogs affect presentation only. Nirmala UI/Mangal render Devanagari offline, and navigation/buttons wrap rather than clip longer labels. User names, references, financial values and stored enums are preserved. Fresh-context Hallmark review found no clipping or overlap; three Hindi wording fixes were applied. Language checks cover 92 desktop screens, mobile settings/dashboard/receipt forms, saved preference, validation and actual Unicode data entry.
+
 Phase 6 adds Backup & recovery using the existing tokens, native confirmation, focused error/success feedback and responsive labelled backup records. Dates, locations and size are direct text; no chart is justified. The page distinguishes the parent backup location from the dated folder that must be copied/restored. Restore runs with the app closed, validates before replacing data and retains the previous workspace.
 
 Phase 5 adds source-linked financial dashboard, search, Payment ID 360 and report/export screens. URL parameters retain report type, scope and period. Plain SVG comparison bars encode magnitude with signed INR values always visible; tables are the fallback. Report tables paginate at 25 rows on screen but export every filtered row. Current positions and period movements are explicitly separated. Printed wide reports use labelled records, date/scope metadata, totals and page numbers. The approved Furrow tokens and local system fonts remain unchanged.

@@ -868,3 +868,17 @@ input[readonly] {
 .recovery-list {
   margin-block-start: var(--space-lg);
 }
+
+/* Local Windows fonts cover Devanagari without downloading fonts. */
+:root:lang(mr), :root:lang(hi) {
+  --font-body: "Nirmala UI", Mangal, "Segoe UI", sans-serif;
+  --font-display: "Nirmala UI", Mangal, "Segoe UI", sans-serif;
+}
+:is(html:lang(mr), html:lang(hi)) .sidebar nav a,
+:is(html:lang(mr), html:lang(hi)) .button,
+:is(html:lang(mr), html:lang(hi)) button {
+  white-space: normal;
+  line-height: 1.6;
+}
+#language-form { display: grid; gap: var(--space-md); justify-items: start; }
+#language-form label { width: 100%; }

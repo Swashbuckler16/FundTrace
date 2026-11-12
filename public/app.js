@@ -1,3 +1,4 @@
+import { html, markup, t, msg, languages, getLanguage, setLanguage, validationMessage } from "./i18n.js";
 import {
   renderFinance,
   financialReversalForm,
@@ -26,6 +27,7 @@ const app = document.querySelector("#app");
 let records = {},
   renderVersion = 0;
 const titles = {
+  settings: "Settings",
   recovery: "Backup & recovery",
   dashboard: "Financial dashboard",
   search: "Search & Payment ID 360",
@@ -56,6 +58,7 @@ const singular = {
   beneficiaries: "beneficiary",
 };
 const icons = {
+  settings: "M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2M16 8l2-2M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
   dashboard: "M3 21h18M6 17V9m6 8V3m6 14v-5",
   search: "M21 21l-6-6M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0",
   reports: "M4 3h16v18H4zM8 8h8m-8 4h8m-8 4h4",
@@ -88,13 +91,13 @@ const esc = (value) =>
       ],
   );
 const icon = (name) =>
-  `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${icons[name] || icons.projects}"/></svg>`;
+  html`<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${icons[name] || icons.projects}"/></svg>`;
 const rupees = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(
     n / 100,
   );
 const when = (s) =>
-  new Date(s).toLocaleString("en-IN", {
+  new Date(s).toLocaleString(`${getLanguage()}-IN-u-nu-latn`, {
     timeZone: "Asia/Kolkata",
     dateStyle: "medium",
     timeStyle: "short",
@@ -126,17 +129,17 @@ async function api(path, options = {}) {
     });
   } catch {
     throw new Error(
-      "Could not reach the local workspace. Start FundTrace on this computer and try again.",
+      t("Could not reach the local workspace. Start FundTrace on this computer and try again."),
     );
   }
   const result = await response.json();
   if (!response.ok) {
-    throw new Error(result.error);
+    throw new Error(t(result.error));
   }
   return result;
 }
 function errorBox(message) {
-  return `<div class="error" role="alert" tabindex="-1">${esc(message)}</div>`;
+  return html`<div class="error" role="alert" tabindex="-1">${esc(t(message))}</div>`;
 }
 function bindForm(id, callback) {
   const form = document.getElementById(id);
@@ -152,13 +155,13 @@ function bindForm(id, callback) {
       .filter((el) => el.willValidate)
       .forEach((el) => el.removeAttribute("aria-invalid"));
     if (invalid.length) {
-      error.innerHTML = `Check the following fields: <ul>${invalid.map((el) => `<li><a href="#${el.id}">${esc(el.labels?.[0]?.childNodes[0]?.textContent || el.name)}: ${esc(el.validationMessage)}</a></li>`).join("")}</ul>`;
+      error.innerHTML = html`Check the following fields: <ul>${invalid.map((el) => html`<li><a href="#${el.id}">${esc(el.labels?.[0]?.childNodes[0]?.textContent || el.name)}: ${esc(validationMessage(el))}</a></li>`).join("")}</ul>`;
       invalid.forEach((el) => {
         el.setAttribute("aria-invalid", "true");
         const hint = document.createElement("span");
         hint.className = "field-error";
         hint.id = `${el.id}-error`;
-        hint.textContent = el.validationMessage;
+        hint.textContent = validationMessage(el);
         el.setAttribute("aria-describedby", hint.id);
         el.after(hint);
       });
@@ -182,7 +185,7 @@ function bindForm(id, callback) {
 function shell(page) {
   document.querySelector("#print-report")?.remove();
   const nav = Object.keys(icons);
-  app.innerHTML = `<div class="shell"><aside class="sidebar" id="navigation"><a href="${href("overview")}" class="wordmark"><span class="mark" aria-hidden="true">F</span>FundTrace</a><nav aria-label="Primary">${nav.map((key, i) => `${key === "societies" ? '<p class="nav-caption">Master records</p>' : ""}${key === "audit" ? '<p class="nav-caption">Workspace controls</p>' : ""}<a href="${href(key)}" ${page === key ? 'aria-current="page"' : ""}>${icon(key)}${titles[key]}</a>`).join("")}</nav><div class="sidebar-foot"><strong>Funds workspace</strong><p>Trace receipts, claims and payments locally.</p></div></aside><div class="workspace"><header class="topbar"><button type="button" class="quiet mobile-menu" id="menu" aria-controls="navigation" aria-expanded="false">Menu</button><span class="muted">Labour Society administration</span><span class="local-mode">Offline workspace <small>Saved on this computer</small></span></header><main id="main" class="content" tabindex="-1"><p role="status">Loading records…</p></main></div></div>`;
+  app.innerHTML = html`<div class="shell"><aside class="sidebar" id="navigation"><a href="${href("overview")}" class="wordmark"><span class="mark" aria-hidden="true">F</span>FundTrace</a><nav aria-label="Primary">${nav.map((key, i) => html`${key === "societies" ? markup('<p class="nav-caption">Master records</p>') : ""}${key === "audit" ? markup('<p class="nav-caption">Workspace controls</p>') : ""}<a href="${href(key)}" ${page === key ? 'aria-current="page"' : ""}>${icon(key)}${t(titles[key])}</a>`).join("")}</nav><div class="sidebar-foot"><strong>Funds workspace</strong><p>Trace receipts, claims and payments locally.</p></div></aside><div class="workspace"><header class="topbar"><button type="button" class="quiet mobile-menu" id="menu" aria-controls="navigation" aria-expanded="false">Menu</button><span class="muted">Labour Society administration</span><span class="local-mode">Offline workspace <small>Saved on this computer</small></span></header><main id="main" class="content" tabindex="-1"><p role="status">Loading records…</p></main></div></div>`;
   document.querySelector("#menu").onclick = () => {
     const open = document.querySelector("#navigation").classList.toggle("open");
     document.querySelector("#menu").setAttribute("aria-expanded", String(open));
@@ -190,9 +193,9 @@ function shell(page) {
 }
 
 const head = (title, description, action = "") =>
-  `<div class="page-head"><div><h1>${esc(title)}</h1><p>${esc(description)}</p></div>${action}</div>`;
+  html`<div class="page-head"><div><h1>${esc(title)}</h1><p>${esc(description)}</p></div>${action}</div>`;
 const addButton = (kind) =>
-  `<a class="button primary" href="${href(kind, { new: "1" })}">Add ${singular[kind]}</a>`;
+  html`<a class="button primary" href="${href(kind, { new: "1" })}">Add ${t(singular[kind])}</a>`;
 const nameOf = (kind, id) =>
   records[kind]?.find((r) => r.id === id)?.name || "Not specified";
 function overview() {
@@ -225,18 +228,18 @@ function overview() {
   ];
   return (
     head(
-      "Your records, ready for work.",
-      "Build the foundation for tracing Government receipts to their utilisation.",
+      t("Your records, ready for work."),
+      t("Build the foundation for tracing Government receipts to their utilisation."),
       addButton("societies"),
     ) +
-    `<div class="summary">${Object.entries(records)
+    html`<div class="summary">${Object.entries(records)
       .map(
         ([kind, list]) =>
-          `<a href="${href(kind)}"><strong>${list.length}</strong><span>${titles[kind]}</span></a>`,
+          html`<a href="${href(kind)}"><strong>${list.length}</strong><span>${t(titles[kind])}</span></a>`,
       )
       .join(
         "",
-      )}</div><section class="onboarding"><h2>Set up your Society workspace</h2><p>Follow the record links below. Your changes are saved with an audit trail.</p><ol class="steps">${steps.map(([kind, title, description], i) => `<li><span>${i + 1}</span><div><h3>${title}</h3><p>${description}</p></div><a class="button quiet" href="${href(kind)}">${records[kind].length ? "View records" : "Open register"}</a></li>`).join("")}</ol></section><p class="notice">Posted receipt credits are available in the bank book. Claims, payments, statement reconciliation and separate tax records are ready. All records work without internet.</p>`
+      )}</div><section class="onboarding"><h2>Set up your Society workspace</h2><p>Follow the record links below. Your changes are saved with an audit trail.</p><ol class="steps">${steps.map(([kind, title, description], i) => html`<li><span>${i + 1}</span><div><h3>${esc(t(title))}</h3><p>${esc(t(description))}</p></div><a class="button quiet" href="${href(kind)}">${records[kind].length ? t("View records") : t("Open register")}</a></li>`).join("")}</ol></section><p class="notice">Posted receipt credits are available in the bank book. Claims, payments, statement reconciliation and separate tax records are ready. All records work without internet.</p>`
   );
 }
 function register(kind, r) {
@@ -257,11 +260,11 @@ function register(kind, r) {
   }[kind];
   return (
     head(
-      titles[kind],
-      `Maintain ${titles[kind].toLowerCase()} with stable IDs and a recorded change history.`,
+      t(titles[kind]),
+      msg`Maintain ${t(titles[kind]).toLowerCase()} with stable IDs and a recorded change history.`,
       addButton(kind),
     ) +
-    `<form id="filter" class="toolbar"><label>Search records<input name="q" value="${esc(r.q)}" placeholder="Name, ID or reference"></label><label>Status<select name="status"><option value="">All statuses</option>${["Active", "Inactive"].map((v) => `<option ${r.status === v ? "selected" : ""}>${v}</option>`).join("")}</select></label>${["projects", "banks", "beneficiaries"].includes(kind) ? `<label>Society<select name="society"><option value="">All Societies</option>${records.societies.map((s) => `<option value="${s.id}" ${r.society === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select></label>` : ""}<button type="submit">Apply filters</button></form><div class="section-head"><h2>${list.length} ${list.length === 1 ? "record" : "records"}</h2>${r.q || r.status || r.society ? `<a href="${href(kind)}">Clear filters</a>` : "<small>Private details are masked</small>"}</div>${list.length ? `<div class="table-wrap"><table><thead><tr><th>Name / ID</th><th>${third}</th><th>${["societies", "departments"].includes(kind) ? "Updated" : "Society"}</th><th>Status</th><th>Record</th></tr></thead><tbody>${list.map((x) => `<tr><td><strong>${esc(x.name)}</strong><small>${esc(x.ref)}</small></td><td data-label="${third}">${esc(x.code || x.division || x.workOrder || x.accountNumber || x.category || "Not specified")}</td><td data-label="${["societies", "departments"].includes(kind) ? "Updated" : "Society"}">${esc(["societies", "departments"].includes(kind) ? when(x.updatedAt) : nameOf("societies", x.societyId))}</td><td><span class="status ${x.status === "Inactive" ? "inactive" : ""}">${x.status}</span></td><td><a class="button quiet" href="${href(kind, { id: x.id })}" aria-label="Open ${esc(x.name)}">Open</a></td></tr>`).join("")}</tbody></table></div>` : `<section class="empty">${icon(kind)}<h2>${r.q || r.status || r.society ? "No matching records" : `No ${titles[kind].toLowerCase()} yet`}</h2><p>${r.q || r.status || r.society ? "Change or clear your filters to see more records." : `Add your first ${singular[kind]} to establish a reusable master record.`}</p>${addButton(kind)}</section>`}`
+    html`<form id="filter" class="toolbar"><label>Search records<input name="q" value="${esc(r.q)}" placeholder="Name, ID or reference"></label><label>Status<select name="status"><option value="">All statuses</option>${["Active", "Inactive"].map((v) => html`<option value="${esc(v)}" ${r.status === v ? "selected" : ""}>${esc(t(v))}</option>`).join("")}</select></label>${["projects", "banks", "beneficiaries"].includes(kind) ? html`<label>Society<select name="society"><option value="">All Societies</option>${records.societies.map((s) => html`<option value="${s.id}" ${r.society === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select></label>` : ""}<button type="submit">Apply filters</button></form><div class="section-head"><h2>${list.length} ${list.length === 1 ? t("record") : t("records")}</h2>${r.q || r.status || r.society ? html`<a href="${href(kind)}">Clear filters</a>` : markup("<small>Private details are masked</small>")}</div>${list.length ? html`<div class="table-wrap"><table><thead><tr><th>Name / ID</th><th>${t(third)}</th><th>${["societies", "departments"].includes(kind) ? t("Updated") : t("Society")}</th><th>Status</th><th>Record</th></tr></thead><tbody>${list.map((x) => html`<tr><td><strong>${esc(x.name)}</strong><small>${esc(x.ref)}</small></td><td data-label="${t(third)}">${esc(x.code || x.division || x.workOrder || x.accountNumber || t(x.category) || t("Not specified"))}</td><td data-label="${t(["societies", "departments"].includes(kind) ? "Updated" : "Society")}">${esc(["societies", "departments"].includes(kind) ? when(x.updatedAt) : nameOf("societies", x.societyId))}</td><td><span class="status ${x.status === "Inactive" ? "inactive" : ""}">${t(x.status)}</span></td><td><a class="button quiet" href="${href(kind, { id: x.id })}" aria-label="Open ${esc(x.name)}">Open</a></td></tr>`).join("")}</tbody></table></div>` : html`<section class="empty">${icon(kind)}<h2>${r.q || r.status || r.society ? t("No matching records") : msg`No ${titles[kind].toLowerCase()} yet`}</h2><p>${r.q || r.status || r.society ? t("Change or clear your filters to see more records.") : msg`Add your first ${t(singular[kind])} to establish a reusable master record.`}</p>${addButton(kind)}</section>`}`
   );
 }
 // Field schemas are shared by creation, editing and the readable detail view.
@@ -367,22 +370,22 @@ function field(f, value = "", editing = false) {
   let control;
   const attrs = `id="f-${f.key}" name="${f.key}" ${f.required ? "required" : ""}`;
   if (records[f.type])
-    control = `<select ${attrs} ${editing && f.key === "societyId" ? "disabled" : ""}><option value="">Select ${f.label.toLowerCase()}</option>${records[
+    control = html`<select ${attrs} ${editing && f.key === "societyId" ? "disabled" : ""}><option value="">Select ${esc(t(f.label))}</option>${records[
       f.type
     ]
       .filter((x) => x.status === "Active" || x.id === value)
       .map(
         (x) =>
-          `<option value="${x.id}" ${x.id === value ? "selected" : ""}>${esc(x.name)}</option>`,
+          html`<option value="${x.id}" ${x.id === value ? "selected" : ""}>${esc(x.name)}</option>`,
       )
       .join("")}</select>`;
   else if (f.type === "select")
-    control = `<select ${attrs}>${f.options.map((v) => `<option ${String(value) === v ? "selected" : ""}>${esc(v)}</option>`).join("")}</select>`;
+    control = html`<select ${attrs}>${f.options.map((v) => html`<option value="${esc(v)}" ${String(value) === v ? "selected" : ""}>${esc(t(v))}</option>`).join("")}</select>`;
   else if (f.type === "textarea")
-    control = `<textarea ${attrs} maxlength="2000">${esc(value)}</textarea>`;
+    control = html`<textarea ${attrs} maxlength="2000">${esc(value)}</textarea>`;
   else
     control = `<input ${attrs} type="${f.type === "decimal" ? "text" : f.type}" ${f.type === "decimal" ? 'inputmode="decimal" pattern="[0-9]+(\\.[0-9]{1,2})?"' : ""} ${f.key === "accountNumber" ? 'inputmode="numeric"' : ""} ${editing && f.key === "code" ? "readonly" : ""} maxlength="240" value="${esc(value)}" >`;
-  return `<label class="${f.type === "textarea" ? "wide" : ""}">${esc(f.label)}${f.required ? " (required)" : ""}${control}${editing && f.key === "code" ? '<small class="field-hint">Cannot change after creation.</small>' : ""}</label>`;
+  return html`<label class="${f.type === "textarea" ? "wide" : ""}">${esc(t(f.label))}${f.required ? t(" (required)") : ""}${control}${editing && f.key === "code" ? markup('<small class="field-hint">Cannot change after creation.</small>') : ""}</label>`;
 }
 function masterFields(kind, record) {
   const input = (f) =>
@@ -395,18 +398,18 @@ function masterFields(kind, record) {
   ]
     .map(
       ([title, start, end]) =>
-        `<fieldset class="wide form-section"><legend>${title}</legend><div class="form-grid">${fields[kind].slice(start, end).map(input).join("")}</div></fieldset>`,
+        html`<fieldset class="wide form-section"><legend>${esc(t(title))}</legend><div class="form-grid">${fields[kind].slice(start, end).map(input).join("")}</div></fieldset>`,
     )
     .join("");
 }
 function masterForm(kind, record) {
   return (
-    `<a class="button quiet back" href="${href(kind, record ? { id: record.id } : {})}">Back to ${record ? "record" : "register"}</a>` +
+    html`<a class="button quiet back" href="${href(kind, record ? { id: record.id } : {})}">Back to ${record ? t("record") : t("register")}</a>` +
     head(
-      `${record ? "Edit" : "Add"} ${singular[kind]}`,
-      "Keep the details accurate. Required fields are marked.",
+      `${t(record ? "Edit" : "Add")} ${t(singular[kind])}`,
+      t("Keep the details accurate. Required fields are marked."),
     ) +
-    `<form id="master-form" class="form-panel" novalidate>${errorBox("")}<div class="form-grid">${masterFields(kind, record)}${field(F("status", "Status", "select", true, ["Active", "Inactive"]), record?.status || "Active")}${field(F("duplicateReason", "Duplicate-name justification (if needed)", "textarea"))}${record ? field(F("reason", "Reason for change", "textarea", true)) : ""}</div><p class="form-help">${kind === "banks" ? "Use the actual bank opening balance. It is separate from receipt allocation balances." : kind === "societies" ? "GST rate is configuration only. Tax credits never create cash. Society code cannot change after creation." : "Inactive records remain available in history."}</p><div class="form-actions"><button class="primary" type="submit">${record ? "Save changes" : "Create record"}</button><a class="button quiet" href="${href(kind, record ? { id: record.id } : {})}">Cancel</a></div></form>`
+    html`<form id="master-form" class="form-panel" novalidate>${errorBox("")}<div class="form-grid">${masterFields(kind, record)}${field(F("status", "Status", "select", true, ["Active", "Inactive"]), record?.status || "Active")}${field(F("duplicateReason", "Duplicate-name justification (if needed)", "textarea"))}${record ? field(F("reason", "Reason for change", "textarea", true)) : ""}</div><p class="form-help">${kind === "banks" ? t("Use the actual bank opening balance. It is separate from receipt allocation balances.") : kind === "societies" ? t("GST rate is configuration only. Tax credits never create cash. Society code cannot change after creation.") : t("Inactive records remain available in history.")}</p><div class="form-actions"><button class="primary" type="submit">${record ? t("Save changes") : t("Create record")}</button><a class="button quiet" href="${href(kind, record ? { id: record.id } : {})}">Cancel</a></div></form>`
   );
 }
 function readable(f, v) {
@@ -415,24 +418,25 @@ function readable(f, v) {
       ? rupees(v)
       : `${(v / 100).toFixed(2)}%`;
   if (records[f.type]) return nameOf(f.type, v);
-  if (typeof v === "boolean") return v ? "Yes" : "No";
-  return v || "Not provided";
+  if (typeof v === "boolean") return t(v ? "Yes" : "No");
+  if (f.type === "select") return t(v || "Not provided");
+  return v || t("Not provided");
 }
 function details(kind, record, history) {
   return (
-    `<a class="button quiet back" href="${href(kind)}">Back to register</a>` +
+    html`<a class="button quiet back" href="${href(kind)}">Back to register</a>` +
     head(
       record.name,
-      `${record.ref}, revision ${record.revision}`,
-      `<a class="button primary" href="${href(kind, { id: record.id, edit: "1" })}">Edit record</a>`,
+      msg`${record.ref}, revision ${record.revision}`,
+      html`<a class="button primary" href="${href(kind, { id: record.id, edit: "1" })}">Edit record</a>`,
     ) +
-    `<div class="section-head"><h2>Record details</h2><button type="button" id="reveal">Reveal masked details</button></div><div id="detail-fields"><dl class="details">${fields[kind].map((f) => `<div><dt>${f.label}</dt><dd>${esc(readable(f, record[f.key]))}</dd></div>`).join("")}<div><dt>Status</dt><dd>${record.status}</dd></div></dl></div><div class="section-head"><h2>Change history</h2><small>Times shown in India Standard Time</small></div>${historyMarkup(history)}`
+    html`<div class="section-head"><h2>Record details</h2><button type="button" id="reveal">Reveal masked details</button></div><div id="detail-fields"><dl class="details">${fields[kind].map((f) => html`<div><dt>${t(f.label)}</dt><dd>${esc(readable(f, record[f.key]))}</dd></div>`).join("")}<div><dt>Status</dt><dd>${t(record.status)}</dd></div></dl></div><div class="section-head"><h2>Change history</h2><small>Times shown in India Standard Time</small></div>${historyMarkup(history)}`
   );
 }
 function historyMarkup(history) {
   return history.length
-    ? `<ol class="history">${history.map((e) => `<li><strong>${esc(e.action)}</strong><p>${esc(e.actor)} • ${when(e.at)}</p>${e.reason ? `<p>${esc(e.reason)}</p>` : ""}${e.after ? `<details><summary>View recorded changes</summary><pre>${esc(JSON.stringify({ before: e.before, after: e.after }, null, 2))}</pre></details>` : ""}</li>`).join("")}</ol>`
-    : '<p class="muted">No audit events are visible for this record.</p>';
+    ? html`<ol class="history">${history.map((e) => html`<li><strong>${esc(t(e.action))}</strong><p>${esc(t(e.actor))} • ${when(e.at)}</p>${e.reason ? html`<p>${esc(e.reason)}</p>` : ""}${e.after ? html`<details><summary>View recorded changes</summary><pre>${esc(JSON.stringify({ before: e.before, after: e.after }, null, 2))}</pre></details>` : ""}</li>`).join("")}</ol>`
+    : markup('<p class="muted">No audit events are visible for this record.</p>');
 }
 async function render() {
   const current = ++renderVersion,
@@ -450,6 +454,10 @@ async function render() {
     if (current !== renderVersion) return;
     records = Object.fromEntries(lists);
     if (page === "overview") main.innerHTML = overview();
+    else if (page === "settings") {
+      main.innerHTML = head(t("Settings"), t("Choose the language you find easiest to read.")) + html`<form id="language-form" class="form-panel" novalidate>${errorBox("")}<label for="language">${t("Language")}<select id="language" name="language">${Object.entries(languages).map(([code, name]) => html`<option value="${code}" ${getLanguage() === code ? "selected" : ""}>${name}</option>`).join("")}</select></label><p>${t("Only screen text changes. Your saved records, amounts and references stay the same.")}</p><p>${t("This choice is saved in this browser and works without internet.")}</p><button class="primary" type="submit">${t("Save language")}</button></form>`;
+      bindForm("language-form", async (data) => { setLanguage(data.language); location.reload(); });
+    }
     else if (page === "recovery") await renderRecovery(main, financeUI());
     else if (["dashboard", "search", "reports", "trace"].includes(page))
       await renderReports(main, r, financeUI());
@@ -510,8 +518,8 @@ async function render() {
                 `/masters/${page}/${r.id}?restricted=true`,
               );
               document.querySelector("#detail-fields").innerHTML =
-                `<dl class="details">${fields[page].map((f) => `<div><dt>${f.label}</dt><dd>${esc(readable(f, full[f.key]))}</dd></div>`).join("")}<div><dt>Status</dt><dd>${esc(full.status)}</dd></div></dl>`;
-              reveal.textContent = "Detail view recorded";
+                html`<dl class="details">${fields[page].map((f) => html`<div><dt>${t(f.label)}</dt><dd>${esc(readable(f, full[f.key]))}</dd></div>`).join("")}<div><dt>Status</dt><dd>${esc(t(full.status))}</dd></div></dl>`;
+              reveal.textContent = t("Detail view recorded");
             } catch (e) {
               reveal.after(
                 Object.assign(document.createElement("p"), {
@@ -532,34 +540,34 @@ async function render() {
       const events = await api("/audit");
       main.innerHTML =
         head(
-          "Audit history",
-          "Latest 250 local events. Changes retain before and after values; sensitive fields are masked.",
+          t("Audit history"),
+          t("Latest 250 local events. Changes retain before and after values; sensitive fields are masked."),
         ) + historyMarkup(events);
     } else if (page === "numbering") {
       const n = await api("/numbering");
       main.innerHTML =
         head(
-          "Numbering",
-          "Immutable master IDs are assigned atomically and never reused.",
+          t("Numbering"),
+          t("Immutable master IDs are assigned atomically and never reused."),
         ) +
-        `<dl class="details">${Object.keys(singular)
+        html`<dl class="details">${Object.keys(singular)
           .map(
             (k) =>
-              `<div><dt>${titles[k]}</dt><dd>${esc(n.masters.find((s) => s.key === `master:${k}`)?.value || 0)} IDs issued</dd></div>`,
+              html`<div><dt>${t(titles[k])}</dt><dd>${esc(n.masters.find((s) => s.key === `master:${k}`)?.value || 0)} IDs issued</dd></div>`,
           )
           .join(
             "",
           )}</dl><div class="section-head"><h2>Transaction numbering</h2></div><p>Receipt: <code>${esc(n.receiptPreview)}</code></p><p>Outward: <code>${esc(n.outwardPreview)}</code></p><p class="notice">Receipt IDs are assigned when posting, using the credit date’s Indian financial year (1 April–31 March). Outward IDs are assigned at posting using the bank debit date.</p>`;
     } else
       throw new Error(
-        "This page is not available. Use the navigation to open a workspace page.",
+        t("This page is not available. Use the navigation to open a workspace page."),
       );
     main.focus({ preventScroll: true });
   } catch (e) {
     main.innerHTML =
-      head("Could not open this page", "Your records have not been changed.") +
+      head(t("Could not open this page"), t("Your records have not been changed.")) +
       errorBox(e.message) +
-      `<a class="button" href="${href(page)}">Try again</a>`;
+      html`<a class="button" href="${href(page)}">Try again</a>`;
   }
 }
 function navigate(url) {
@@ -629,17 +637,17 @@ const receiptFields = [
   F("taxCredit", "Tax credit (INR)", "decimal"),
 ];
 async function renderReceipts(main, r) {
-  const add = `<a class="button primary" href="${href("receipts", { new: "1" })}">Record receipt</a>`;
+  const add = html`<a class="button primary" href="${href("receipts", { new: "1" })}">Record receipt</a>`;
   if (r.create || r.edit) {
     const record = r.id ? await api(`/receipts/${r.id}`) : null;
     if (record && record.status !== "Draft")
-      throw new Error("Posted receipts cannot be edited.");
+      throw new Error(t("Posted receipts cannot be edited."));
     main.innerHTML =
       head(
-        record ? "Edit receipt draft" : "Record Government receipt",
-        "Save incomplete details as a draft. Map the project and attach bank evidence before posting.",
+        record ? t("Edit receipt draft") : t("Record Government receipt"),
+        t("Save incomplete details as a draft. Map the project and attach bank evidence before posting."),
       ) +
-      `<form id="receipt-form" class="form-panel" novalidate>${errorBox("")}<div class="form-grid">${receiptFields.map((f) => field(f, record?.[f.key] ?? (f.type === "decimal" ? "0" : ""), !!record)).join("")}</div>
+      html`<form id="receipt-form" class="form-panel" novalidate>${errorBox("")}<div class="form-grid">${receiptFields.map((f) => field(f, record?.[f.key] ?? (f.type === "decimal" ? "0" : ""), !!record)).join("")}</div>
       <p class="notice">Only the credited amount creates cash. Gross bill, GST deduction and tax credit are reference information and never increase the bank balance.</p>
       <div class="form-actions"><button type="submit" class="primary">Save draft</button><a class="button quiet" href="${href("receipts", record ? { id: record.id } : {})}">Cancel</a></div></form>`;
     const scopeOptions = () => {
@@ -652,7 +660,7 @@ async function renderReceipts(main, r) {
         const select = document.querySelector(`#f-${key}`),
           value = select.value;
         select.innerHTML =
-          '<option value="">To be mapped</option>' +
+          markup('<option value="">To be mapped</option>') +
           records[kind]
             .filter(
               (x) =>
@@ -662,7 +670,7 @@ async function renderReceipts(main, r) {
             )
             .map(
               (x) =>
-                `<option value="${x.id}" ${x.id === value ? "selected" : ""}>${esc(x.name)}${x.workOrder ? ` — ${esc(x.workOrder)}` : ""}</option>`,
+                html`<option value="${x.id}" ${x.id === value ? "selected" : ""}>${esc(x.name)}${x.workOrder ? msg` — ${esc(x.workOrder)}` : ""}</option>`,
             )
             .join("");
       }
@@ -685,23 +693,23 @@ async function renderReceipts(main, r) {
     const receipt = await api(`/receipts/${r.id}`),
       history = await api(`/audit?entity=${r.id}`);
     main.innerHTML =
-      `<a class="button quiet back" href="${href("receipts")}">Back to receipts</a>` +
+      html`<a class="button quiet back" href="${href("receipts")}">Back to receipts</a>` +
       head(
-        receipt.paymentId || "Receipt draft",
-        `${receipt.status}, Entered ${when(receipt.createdAt)}, Local workspace`,
+        receipt.paymentId || t("Receipt draft"),
+        msg`${t(receipt.status)}, Entered ${when(receipt.createdAt)}, Local workspace`,
         receipt.status === "Draft"
-          ? `<a class="button" href="${href("receipts", { id: r.id, edit: "1" })}">Edit draft</a>`
-          : `<a class="button" href="${href("trace", { id: r.id })}">Payment ID 360</a>`,
+          ? html`<a class="button" href="${href("receipts", { id: r.id, edit: "1" })}">Edit draft</a>`
+          : html`<a class="button" href="${href("trace", { id: r.id })}">Payment ID 360</a>`,
       ) +
-      `<div class="summary"><div><strong>${rupees(receipt.amount)}</strong><span>Bank credit ${receipt.status === "Draft" ? "(draft)" : receipt.status === "Reversed" ? "(reversed)" : "(posted)"}</span></div><div><strong>${rupees(receipt.available)}</strong><span>Available for allocation</span></div></div>
-      <dl class="details">${receiptFields.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${esc(f.type === "decimal" ? rupees(receipt[f.key]) : readable(f, receipt[f.key]))}</dd></div>`).join("")}</dl>
-      <p class="notice">Tax figures are separate from cash. Use Payment ID 360 to review linked payments, tax and reconciliation. ${receipt.status === "Draft" ? "Drafts do not affect balances or receive a Payment ID." : receipt.status === "Reversed" ? "This receipt is reversed. Its Payment ID, original bank credit and reversal remain in history." : "Posted receipts are locked. Use a reasoned reversal to correct them."}</p>
-      <section><h2>Bank evidence</h2>${receipt.evidence.length ? `<ul>${receipt.evidence.map((f) => `<li><a href="/api/receipts/${r.id}/evidence/${f.id}" download>${esc(f.name)}</a> (${Math.ceil(f.size / 1024)} KB)</li>`).join("")}</ul>` : "<p>No evidence attached yet.</p>"}
-      ${receipt.status === "Draft" ? `<form id="evidence-form" class="form-panel" novalidate>${errorBox("")}<label>Evidence file (required)<input id="evidence-file" name="file" type="file" accept=".pdf,.png,.jpg,.jpeg" required></label><p>PDF, PNG or JPEG. Up to 2 MB each, maximum five files. Stored encrypted on this computer.</p><button type="submit">Attach evidence</button></form>` : ""}</section>
+      html`<div class="summary"><div><strong>${rupees(receipt.amount)}</strong><span>Bank credit ${receipt.status === "Draft" ? t("(draft)") : receipt.status === "Reversed" ? t("(reversed)") : t("(posted)")}</span></div><div><strong>${rupees(receipt.available)}</strong><span>Available for allocation</span></div></div>
+      <dl class="details">${receiptFields.map((f) => html`<div><dt>${esc(t(f.label))}</dt><dd>${esc(f.type === "decimal" ? rupees(receipt[f.key]) : readable(f, receipt[f.key]))}</dd></div>`).join("")}</dl>
+      <p class="notice">Tax figures are separate from cash. Use Payment ID 360 to review linked payments, tax and reconciliation. ${receipt.status === "Draft" ? t("Drafts do not affect balances or receive a Payment ID.") : receipt.status === "Reversed" ? t("This receipt is reversed. Its Payment ID, original bank credit and reversal remain in history.") : t("Posted receipts are locked. Use a reasoned reversal to correct them.")}</p>
+      <section><h2>Bank evidence</h2>${receipt.evidence.length ? html`<ul>${receipt.evidence.map((f) => html`<li><a href="/api/receipts/${r.id}/evidence/${f.id}" download>${esc(f.name)}</a> (${Math.ceil(f.size / 1024)} KB)</li>`).join("")}</ul>` : markup("<p>No evidence attached yet.</p>")}
+      ${receipt.status === "Draft" ? html`<form id="evidence-form" class="form-panel" novalidate>${errorBox("")}<label>Evidence file (required)<input id="evidence-file" name="file" type="file" accept=".pdf,.png,.jpg,.jpeg" required></label><p>PDF, PNG or JPEG. Up to 2 MB each, maximum five files. Stored encrypted on this computer.</p><button type="submit">Attach evidence</button></form>` : ""}</section>
       ${
         receipt.status === "Draft"
-          ? `<section><h2>Review and post</h2><form id="post-form" class="form-panel" novalidate>${errorBox("")}
-      ${receipt.duplicates.length ? `<div class="notice"><strong>Possible duplicate bank credit</strong><ul>${receipt.duplicates.map((d) => `<li><a href="${href("receipts", { id: d.id })}">${esc(d.paymentId)}</a></li>`).join("")}</ul></div><label class="check-label"><input id="override" type="checkbox" name="override" required>I reviewed the matches and confirm this is a separate bank credit (required)</label>${field(F("duplicateReason", "Duplicate override reason", "textarea", true))}` : ""}
+          ? html`<section><h2>Review and post</h2><form id="post-form" class="form-panel" novalidate>${errorBox("")}
+      ${receipt.duplicates.length ? html`<div class="notice"><strong>Possible duplicate bank credit</strong><ul>${receipt.duplicates.map((d) => html`<li><a href="${href("receipts", { id: d.id })}">${esc(d.paymentId)}</a></li>`).join("")}</ul></div><label class="check-label"><input id="override" type="checkbox" name="override" required>I reviewed the matches and confirm this is a separate bank credit (required)</label>${field(F("duplicateReason", "Duplicate override reason", "textarea", true))}` : ""}
       <label class="check-label"><input id="confirm-post" name="confirm" type="checkbox" required>I confirm this amount was credited to the selected bank account (required)</label>
       <p>Posting assigns an immutable Payment ID using the credit date’s financial year and updates the bank book once. Check the amount, dates and evidence carefully.</p><button type="submit" class="primary">Post confirmed receipt</button></form></section>`
           : ""
@@ -709,7 +717,7 @@ async function renderReceipts(main, r) {
       <h2>Receipt activity</h2>${historyMarkup(history)}`;
     main.insertAdjacentHTML(
       "beforeend",
-      `<section class="finance-section"><h2>Receipt utilisation</h2><p>${esc(receipt.utilisation)}. Allocated: ${rupees(receipt.allocated)}.</p>${receipt.allocationHistory.length ? `<ul>${receipt.allocationHistory.map((a) => `<li><a href="${href("payments", { id: a.payment_id })}">${esc(a.ref)}</a> ${rupees(a.amount)} — ${esc(a.status)}${a.status !== "Posted" ? " (excluded from balances)" : ""}</li>`).join("")}</ul>` : "<p>No posted payment allocations yet.</p>"}</section>`,
+      html`<section class="finance-section"><h2>Receipt utilisation</h2><p>${esc(t(receipt.utilisation))}. Allocated: ${rupees(receipt.allocated)}.</p>${receipt.allocationHistory.length ? html`<ul>${receipt.allocationHistory.map((a) => html`<li><a href="${href("payments", { id: a.payment_id })}">${esc(a.ref)}</a> ${rupees(a.amount)} — ${esc(t(a.status))}${a.status !== "Posted" ? t(" (excluded from balances)") : ""}</li>`).join("")}</ul>` : markup("<p>No posted payment allocations yet.</p>")}</section>`,
     );
     if (receipt.status === "Posted") {
       main.insertAdjacentHTML(
@@ -721,17 +729,17 @@ async function renderReceipts(main, r) {
     if (receipt.reversal)
       main.insertAdjacentHTML(
         "beforeend",
-        `<p class="notice">Reversed on ${esc(receipt.reversal.date)}. ${esc(receipt.reversal.reason)}</p>`,
+        html`<p class="notice">Reversed on ${esc(receipt.reversal.date)}. ${esc(receipt.reversal.reason)}</p>`,
       );
     if (receipt.status === "Draft") {
       bindForm("evidence-form", async (_, form) => {
         const file = form.elements.file.files[0];
         if (!file || file.size > 2 * 1024 * 1024)
-          throw new Error("Select an evidence file no larger than 2 MB.");
+          throw new Error(t("Select an evidence file no larger than 2 MB."));
         const data = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result.split(",")[1]);
-          reader.onerror = () => reject(new Error("Could not read this file."));
+          reader.onerror = () => reject(new Error(t("Could not read this file.")));
           reader.readAsDataURL(file);
         });
         await api(`/receipts/${r.id}/evidence`, {
@@ -764,14 +772,14 @@ async function renderReceipts(main, r) {
     );
     main.innerHTML =
       head(
-        "Government receipts",
-        "Record bank credits, retain evidence and trace every posted rupee.",
+        t("Government receipts"),
+        t("Record bank credits, retain evidence and trace every posted rupee."),
         add,
       ) +
-      `<form id="receipt-filter" class="toolbar"><label>Search receipts<input name="q" value="${esc(r.q)}" placeholder="Payment ID, bill, UTR or Society"></label><label>Status<select name="status"><option value="">All statuses</option>${["Draft", "Posted", "Reversed"].map((s) => `<option ${r.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></label><label>Society<select name="society"><option value="">All Societies</option>${records.societies.map((s) => `<option value="${s.id}" ${r.society === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select></label><button type="submit">Apply filters</button><a href="${href("receipts")}">Clear filters</a></form>` +
+      html`<form id="receipt-filter" class="toolbar"><label>Search receipts<input name="q" value="${esc(r.q)}" placeholder="Payment ID, bill, UTR or Society"></label><label>Status<select name="status"><option value="">All statuses</option>${["Draft", "Posted", "Reversed"].map((s) => html`<option value="${esc(s)}" ${r.status === s ? "selected" : ""}>${esc(t(s))}</option>`).join("")}</select></label><label>Society<select name="society"><option value="">All Societies</option>${records.societies.map((s) => html`<option value="${s.id}" ${r.society === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select></label><button type="submit">Apply filters</button><a href="${href("receipts")}">Clear filters</a></form>` +
       (list.length
-        ? `<div class="table-wrap"><table><thead><tr><th>Payment ID / Society</th><th>Credit date</th><th>Credited amount</th><th>Status</th><th>Receipt</th></tr></thead><tbody>${list.map((x) => `<tr><td><strong>${esc(x.paymentId || "Draft — unposted")}</strong><small>${esc(nameOf("societies", x.societyId))}</small></td><td data-label="Credit date">${esc(x.creditDate || "Not entered")}</td><td data-label="Credited amount">${rupees(x.amount)}</td><td><span class="status">${x.status}</span></td><td><a class="button quiet" href="${href("receipts", { id: x.id })}" aria-label="Open ${esc(x.paymentId || "draft " + x.id)}">Open</a></td></tr>`).join("")}</tbody></table></div>`
-        : '<section class="empty"><h2>No matching receipts</h2><p>Record a bank credit or change the filters. Drafts never increase cash balances.</p></section>');
+        ? html`<div class="table-wrap"><table><thead><tr><th>Payment ID / Society</th><th>Credit date</th><th>Credited amount</th><th>Status</th><th>Receipt</th></tr></thead><tbody>${list.map((x) => html`<tr><td><strong>${esc(x.paymentId || t("Draft — unposted"))}</strong><small>${esc(nameOf("societies", x.societyId))}</small></td><td data-label="Credit date">${esc(x.creditDate || t("Not entered"))}</td><td data-label="Credited amount">${rupees(x.amount)}</td><td><span class="status">${t(x.status)}</span></td><td><a class="button quiet" href="${href("receipts", { id: x.id })}" aria-label="Open ${esc(x.paymentId || "draft " + x.id)}">Open</a></td></tr>`).join("")}</tbody></table></div>`
+        : markup('<section class="empty"><h2>No matching receipts</h2><p>Record a bank credit or change the filters. Drafts never increase cash balances.</p></section>'));
     document.querySelector("#receipt-filter").onsubmit = (e) => {
       e.preventDefault();
       navigate(href("receipts", Object.fromEntries(new FormData(e.target))));
@@ -782,8 +790,8 @@ async function renderBankBook(main) {
   const books = await api("/bank-book");
   main.innerHTML =
     head(
-      "Bank book",
-      "Opening balances plus posted credits, less posted payments, with linked reversals. Drafts and tax credits are excluded.",
+      t("Bank book"),
+      t("Opening balances plus posted credits, less posted payments, with linked reversals. Drafts and tax credits are excluded."),
     ) +
     (books.length
       ? books
@@ -792,10 +800,10 @@ async function renderBankBook(main) {
               bank,
               entries,
               balance,
-            }) => `<section><div class="section-head"><h2>${esc(bank.name)}, ${esc(nameOf("societies", bank.societyId))}</h2><strong>${rupees(balance)}</strong></div>
+            }) => html`<section><div class="section-head"><h2>${esc(bank.name)}, ${esc(nameOf("societies", bank.societyId))}</h2><strong>${rupees(balance)}</strong></div>
     <p>Opening balance ${rupees(bank.openingBalance)} on ${esc(bank.openingDate)}, ${esc(bank.accountNumber)}</p>
-    ${entries.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Transaction</th><th>Credit / debit</th><th>Running balance</th></tr></thead><tbody>${entries.map((e) => `<tr><td data-label="Date">${esc(e.credit_date)}</td><td data-label="Transaction"><a href="${href(e.page, { id: e.entity_id })}">${esc(e.payment_id)}</a></td><td data-label="Credit / debit">${rupees(e.amount)}</td><td data-label="Running balance">${rupees(e.balance)}</td></tr>`).join("")}</tbody></table></div>` : "<p>No posted movements for this account.</p>"}</section>`,
+    ${entries.length ? html`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Transaction</th><th>Credit / debit</th><th>Running balance</th></tr></thead><tbody>${entries.map((e) => html`<tr><td data-label="Date">${esc(e.credit_date)}</td><td data-label="Transaction"><a href="${href(e.page, { id: e.entity_id })}">${esc(e.payment_id)}</a></td><td data-label="Credit / debit">${rupees(e.amount)}</td><td data-label="Running balance">${rupees(e.balance)}</td></tr>`).join("")}</tbody></table></div>` : markup("<p>No posted movements for this account.</p>")}</section>`,
           )
           .join("")
-      : '<section class="empty"><h2>No bank accounts yet</h2><p>Register a bank account with its opening balance to begin.</p></section>');
+      : markup('<section class="empty"><h2>No bank accounts yet</h2><p>Register a bank account with its opening balance to begin.</p></section>'));
 }
