@@ -156,6 +156,7 @@ export function createApp(store, recovery = {}) {
           backupDirectory: backupRoot(store.directory),
           backups: listBackups(store.directory),
           automaticError: recovery.error || null,
+          desktop: !!recovery.desktop,
         });
         return;
       }
@@ -455,11 +456,10 @@ export function createApp(store, recovery = {}) {
   });
 }
 
-if (
-  process.argv[1] &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+export async function startWorkspace(
+  directory,
+  { port = 3000, desktop = false } = {},
 ) {
-  const directory = process.env.FUNDTRACE_DATA_DIR || join(root, "data");
   const release = lockWorkspace(directory);
   let store;
   try {
@@ -468,8 +468,7 @@ if (
     release();
     throw error;
   }
-  const port = Number(process.env.PORT || 3000);
-  const recovery = {};
+  const recovery = { desktop };
   const automaticBackup = () => {
     try {
       const latest = listBackups(directory)[0];
@@ -489,25 +488,68 @@ if (
   const timer = setInterval(automaticBackup, 60 * 60 * 1000);
   timer.unref();
   const server = createApp(store, recovery);
-  server.on("error", (error) => {
+  try {
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(port, "127.0.0.1", () => {
+        server.removeListener("error", reject);
+        resolve();
+      });
+    });
+  } catch (error) {
     clearInterval(timer);
     store.close();
     release();
-    console.error(`Could not start FundTrace: ${error.message}`);
+    throw error;
+  }
+  let stopping;
+  return {
+    server,
+    origin: "http://127.0.0.1:" + server.address().port,
+    stop() {
+      return (stopping ||= new Promise((resolve, reject) => {
+        clearInterval(timer);
+        // Let active requests finish, but an incomplete upload must not hold the workspace open.
+        const forceClose = setTimeout(() => server.closeAllConnections(), 2000);
+        forceClose.unref();
+        server.close(() => {
+          clearTimeout(forceClose);
+          try {
+            store.close();
+            release();
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        });
+        server.closeIdleConnections();
+      }));
+    },
+  };
+}
+
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  try {
+    const workspace = await startWorkspace(
+      process.env.FUNDTRACE_DATA_DIR || join(root, "data"),
+      { port: Number(process.env.PORT || 3000) },
+    );
+    console.log("FundTrace offline workspace: " + workspace.origin);
+    const stop = () =>
+      workspace
+        .stop()
+        .then(() => process.exit(0))
+        .catch((error) => {
+          console.error(error.message);
+          process.exit(1);
+        });
+    process.on("SIGINT", stop);
+    process.on("SIGTERM", stop);
+  } catch (error) {
+    console.error("Could not start FundTrace: " + error.message);
     process.exitCode = 1;
-  });
-  server.listen(port, "127.0.0.1", () =>
-    console.log(
-      `FundTrace offline workspace: http://127.0.0.1:${server.address().port}`,
-    ),
-  );
-  const stop = () =>
-    server.close(() => {
-      store.close();
-      clearInterval(timer);
-      release();
-      process.exit(0);
-    });
-  process.on("SIGINT", stop);
-  process.on("SIGTERM", stop);
+  }
 }

@@ -2,22 +2,25 @@
 
 A completely offline Labour Society workspace for tracing Government receipts to beneficiary payments. **Includes receipts, payments, reconciliation, tax records, search, reports, verified backups and offline recovery.** The application opens directly, with no login, passwords, accounts or cloud services.
 
-## How to install (Windows offline package)
+## How to install (Windows desktop .exe)
 
-1. Open [FundTrace releases](https://github.com/Swashbuckler16/FundTrace/releases) and download the **FundTrace-v2.0.0-win-x64-….zip** asset. Choose the portable ZIP, not GitHub's **Source code** archive. You can download it on another computer and copy it using a USB drive.
-2. Right-click the ZIP and choose **Extract All**. Keep the complete `FundTrace` folder in a private, writable local location such as `C:\FundTrace`. Do not run the app from inside the ZIP or a cloud-synced folder.
-3. Open that folder and double-click **Start FundTrace.cmd**. The package includes its own Node runtime, so you do **not** need to install Node.js, npm or any packages. Use Windows 11 x64 with an installed Microsoft Edge or Chrome browser.
-4. Open [http://127.0.0.1:3000](http://127.0.0.1:3000) in your browser. Keep the launcher window open while working. No internet connection, login or account is needed.
-5. Open **Settings → Language**, select **English / मराठी / हिन्दी**, and click **Save language**. Set up your Society and other master records before entering transactions.
-6. To close the app, press **Ctrl+C** in the launcher. To use it again, double-click **Start FundTrace.cmd**. Your saved records remain in the local data folder.
+1. Open [FundTrace releases](https://github.com/Swashbuckler16/FundTrace/releases) and download **FundTrace-Setup-2.1.0.exe**. This is a complete offline installer; you can copy it to another computer using a USB drive.
+2. Double-click the installer, choose the installation folder, and complete setup. No Node.js, npm, browser installation or account is needed. Windows 11 x64 is the supported local test target.
+3. Open **FundTrace** from the desktop shortcut or Start menu. It opens in its own desktop window, with no terminal or external browser.
+4. Open **Settings → Language**, choose **English / मराठी / हिन्दी**, and save. Set up your Society and other master records before entering transactions.
+5. Close the window to exit safely. Open the shortcut again to continue; records and your language choice persist.
 
-**Upgrading from version 1:** Create a verified backup in **Backup & recovery**, close the old application, and extract version 2 into a separate folder. Run **Restore FundTrace.cmd** from version 2 and follow the [backup restoration instructions](docs/OFFLINE-GUIDE.md#back-up-and-restore). If you already use a separate `FUNDTRACE_DATA_DIR`, keep pointing to that same directory instead. Do not run both versions together against the same records, and retain your old folder and backup until you have checked the upgrade.
+The installer is unsigned because this project has no code-signing certificate. Windows may display an unknown-publisher warning. Download only from this repository's release and compare its SHA256SUMS.txt checksum if needed.
 
-**If it does not open:** Confirm the entire ZIP was extracted, the launcher is still running, and the browser address is exactly `http://127.0.0.1:3000`. Read any error in the launcher; the [offline guide](docs/OFFLINE-GUIDE.md) explains data locations, stale locks and recovery.
+**Existing version 1 / 2.0 records:** In your old app, create a verified backup under **Backup & recovery**, then close it. Install the desktop app and choose **FundTrace → Restore backup** in the top menu. Select the complete dated backup folder, check its date, and confirm. The app restarts with those records. Your previous desktop workspace is retained beside the active folder. Keep the original app and external backup until you have checked the imported records.
+
+Records are stored outside the installation folder, by default in **%APPDATA%\FundTrace\workspace**. Reinstalling or uninstalling does not delete your records. The **Backup & recovery** screen shows the exact location. Use an external drive for verified backups.
+
+See the [desktop installation, backup and troubleshooting guide](docs/DESKTOP-GUIDE.md). The older ZIP/command-file edition remains documented in the [legacy offline guide](docs/OFFLINE-GUIDE.md).
 
 ## Run from source (developers)
 
-**Version 2.0.0:** Open **Settings → Language**, choose **English**, **मराठी** or **हिन्दी**, then save. Marathi and Hindi use simple Devanagari wording. Translations are bundled locally and work offline. The choice is saved in this browser; names, entered notes, IDs, amounts and financial rules stay unchanged. Existing Excel export formats and raw audit evidence remain unchanged.
+**Regional languages:** Open **Settings → Language**, choose **English**, **मराठी** or **हिन्दी**, then save. Marathi and Hindi use simple Devanagari wording. Translations are bundled locally and work offline. The choice is saved in this browser; names, entered notes, IDs, amounts and financial rules stay unchanged. Existing Excel export formats and raw audit evidence remain unchanged.
 
 Requires Node.js **24.14+** and a browser (tested with Node 26.13 and Microsoft Edge). No npm installation or internet access is needed to run the application: it has **zero runtime package dependencies**.
 

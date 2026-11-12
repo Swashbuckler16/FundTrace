@@ -407,7 +407,7 @@ export async function renderReports(main, r, ui) {
       t("Review source-linked totals, then export the same report offline."),
     ) +
     filterForm(result.filters, result.type, catalog) +
-    html`<section class="finance-section"><h2>${esc(t(result.title))}</h2>${metadata(result)}${totals(result)}${Object.keys(result.metrics).length ? html`<h3>Separate receipt / tax positions</h3>${amounts(result.metrics)}` : ""}<div class="toolbar"><button type="button" id="export-xlsx">Export Excel (.xlsx)</button><button type="button" id="export-print">Print / save PDF</button></div><p>Exports include all filtered rows, not just this page. PDF uses your browser’s offline Save as PDF destination.</p><p id="export-status" role="status"></p>${errorBox("")}${listShell}</section>`;
+    html`<section class="finance-section"><h2>${esc(t(result.title))}</h2>${metadata(result)}${totals(result)}${Object.keys(result.metrics).length ? html`<h3>Separate receipt / tax positions</h3>${amounts(result.metrics)}` : ""}<div class="toolbar"><button type="button" id="export-xlsx">Export Excel (.xlsx)</button><button type="button" id="export-print">Print / save PDF</button></div><p>${t(globalThis.fundtraceDesktop ? "Exports include all filtered rows. Choose where to save your PDF on this computer." : "Exports include all filtered rows, not just this page. PDF uses your browser’s offline Save as PDF destination.")}</p><p id="export-status" role="status"></p>${errorBox("")}${listShell}</section>`;
   bindFilters();
   paginated(result);
   const exportReport = async (formatName) => {
@@ -501,6 +501,11 @@ export async function renderReports(main, r, ui) {
         print.id = "print-report";
         print.innerHTML = html`<h1>FundTrace — ${esc(t(fresh.title))}</h1>${metadata(fresh)}${totals(fresh)}${amounts(fresh.metrics)}${table(fresh.columns, fresh.rows, true)}<p>Reviewed by: ____________________ &nbsp; Date: ____________________</p><p>Bank accounts are masked. Personal contact and identity fields are omitted.</p>`;
         document.body.append(print);
+        if (globalThis.fundtraceDesktop) {
+          const saved = await globalThis.fundtraceDesktop.savePDF();
+          status.textContent = t(saved ? "PDF saved locally." : "PDF save cancelled.");
+          return;
+        }
         window.print();
         status.textContent =
           t("Print view prepared. Choose Save as PDF for a local PDF file.");

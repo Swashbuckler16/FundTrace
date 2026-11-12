@@ -1,6 +1,6 @@
 {
   "name": "fundtrace",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
   "description": "Offline Labour Society funds tracking",
@@ -11,14 +11,56 @@
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",
     "test": "node --test test/*.test.mjs",
-    "check": "node --check src/server.mjs && node --check src/store.mjs && node --check src/receipts.mjs && node --check src/payments.mjs && node --check public/app.js && node --check public/payments.js && node --check src/reconciliation.mjs && node --check src/tax.mjs && node --check public/reconciliation.js && node --check public/statement-worker.js && node --check src/reports.mjs && node --check public/reports.js && node --check src/recovery.mjs && node --check public/recovery.js && node --check scripts/recovery.mjs && node --check public/i18n.js && node --check public/languages.js && node --check public/language-extra.js",
+    "check": "node --check src/server.mjs && node --check src/store.mjs && node --check src/receipts.mjs && node --check src/payments.mjs && node --check public/app.js && node --check public/payments.js && node --check src/reconciliation.mjs && node --check src/tax.mjs && node --check public/reconciliation.js && node --check public/statement-worker.js && node --check src/reports.mjs && node --check public/reports.js && node --check src/recovery.mjs && node --check public/recovery.js && node --check scripts/recovery.mjs && node --check public/i18n.js && node --check public/languages.js && node --check public/language-extra.js && node --check desktop/main.mjs && node --check desktop/preload.cjs",
     "test:ui": "node scripts/ui-test.mjs && node scripts/phase4-ui-test.mjs && node scripts/phase5-ui-test.mjs && node scripts/phase6-ui-test.mjs && node scripts/languages-ui-test.mjs",
-    "test:performance": "node scripts/release-benchmark.mjs"
+    "test:performance": "node scripts/release-benchmark.mjs",
+    "start:desktop": "electron .",
+    "build:desktop": "electron-builder --win nsis --x64",
+    "test:desktop": "node scripts/desktop-test.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.1",
+    "electron": "45.3.1",
+    "electron-builder": "26.18.0",
     "playwright": "1.56.1",
     "prettier": "3.9.10",
     "puppeteer-core": "25.16.0"
+  },
+  "main": "desktop/main.mjs",
+  "author": "FundTrace",
+  "build": {
+    "appId": "in.fundtrace.desktop",
+    "productName": "FundTrace",
+    "directories": {
+      "output": "artifacts/desktop"
+    },
+    "files": [
+      "desktop/**",
+      "src/**",
+      "public/*.js",
+      "public/*.html",
+      "public/*.css",
+      "public/vendor/**",
+      "docs/**",
+      "README.md",
+      "package.json"
+    ],
+    "asar": true,
+    "npmRebuild": false,
+    "win": {
+      "target": "nsis",
+      "icon": "desktop/icon.png",
+      "artifactName": "FundTrace-Setup-${version}.${ext}",
+      "signExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": false
+    }
   }
 }

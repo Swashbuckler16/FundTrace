@@ -1,10 +1,23 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { messages } from "../public/languages.js";
+import { readFileSync } from "node:fs";
 globalThis.localStorage = { getItem: () => "mr", setItem() {} };
 const { t, html, msg, setLanguage, getLanguage } =
   await import("../public/i18n.js");
 globalThis.document = { documentElement: {} };
+
+test("desktop menus and dialogs have Marathi and Hindi captions", () => {
+  const source = readFileSync(
+    new URL("../desktop/main.mjs", import.meta.url),
+    "utf8",
+  );
+  for (const [, key] of source.matchAll(/text\("([^"]+)"\)/g)) {
+    assert(messages[key], key);
+    for (const value of messages[key])
+      assert(/[\u0900-\u097f]/.test(value), key);
+  }
+});
 
 test("both translation catalogs preserve every placeholder", () => {
   const slots = (value) =>

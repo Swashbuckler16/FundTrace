@@ -376,6 +376,35 @@ Credit|जमा|जमा
 Initial tax record|कराची पहिली नोंद|कर का पहला रिकॉर्ड
 distribution|वाटप|बँटवारा
 allocation|निधी वाटप|रकम का बँटवारा
+Choose a verified backup folder|तपासलेली बॅकअप प्रत असलेले फोल्डर निवडा|जाँची गई बैकअप कॉपी का फ़ोल्डर चुनें
+Restore backup|बॅकअपमधून नोंदी परत आणा|बैकअप से रिकॉर्ड वापस लाएँ
+Replace this workspace with the selected backup?|निवडलेल्या बॅकअपमधून या जागी नोंदी परत आणायच्या का?|चुने गए बैकअप से यहाँ के रिकॉर्ड बदलने हैं?
+Backup date|बॅकअपची तारीख|बैकअप की तारीख
+Your current workspace is retained. Changes after this backup will not be included.|आताच्या नोंदींचे फोल्डर सुरक्षित ठेवले जाईल. बॅकअपनंतरचे बदल परत आलेल्या नोंदींमध्ये नसतील.|अभी के रिकॉर्ड का फ़ोल्डर सुरक्षित रहेगा। बैकअप के बाद के बदलाव वापस आए रिकॉर्ड में नहीं होंगे।
+Could not restore backup|बॅकअपमधून नोंदी परत आणता आल्या नाहीत|बैकअप से रिकॉर्ड वापस नहीं आ सके
+Exit|बंद करा|बंद करें
+View|दाखवा|देखें
+Undo|मागचा बदल रद्द करा|पिछला बदलाव हटाएँ
+Redo|बदल पुन्हा करा|बदलाव फिर करें
+Cut|कापा|काटें
+Copy|प्रत करा|कॉपी करें
+Paste|चिकटवा|पेस्ट करें
+Select all|सर्व निवडा|सब चुनें
+Reload|पान पुन्हा उघडा|पेज फिर खोलें
+Zoom in|मोठे दाखवा|बड़ा दिखाएँ
+Zoom out|लहान दाखवा|छोटा दिखाएँ
+Actual size|मूळ आकार|असली आकार
+Full screen|पूर्ण पडदा|पूरी स्क्रीन
+Save file|फाइल जतन करा|फ़ाइल सेव करें
+Save PDF|PDF जतन करा|PDF सेव करें
+PDF saved locally.|PDF या संगणकावर जतन केला.|PDF इस कंप्यूटर पर सेव किया।
+PDF save cancelled.|PDF जतन करणे रद्द केले.|PDF सेव करना रद्द किया।
+Exports include all filtered rows. Choose where to save your PDF on this computer.|डाउनलोडमध्ये निवडलेल्या सर्व नोंदी येतात. PDF या संगणकावर कुठे जतन करायचा ते निवडा.|डाउनलोड में चुने सभी रिकॉर्ड आते हैं। PDF इस कंप्यूटर पर कहाँ सेव करना है, वह चुनें।
+This choice is saved in this app and works without internet.|ही निवड या अॅपमध्ये जतन होते आणि इंटरनेटशिवाय चालते.|यह चुनाव इस ऐप में सेव होता है और बिना इंटरनेट काम करता है।
+Could not open the workspace|कामाच्या नोंदी उघडता आल्या नाहीत|काम के रिकॉर्ड नहीं खुल पाए
+Unlock after a crash|अचानक बंद झाल्यानंतरचे लॉक काढा|अचानक बंद होने के बाद का लॉक हटाएँ
+Use the FundTrace menu at the top of this window and choose Restore backup. Select your dated backup folder, check its date and confirm. The app restarts with the restored records.|या खिडकीच्या वरच्या FundTrace मेनूमधून बॅकअपमधून नोंदी परत आणा निवडा. बॅकअपचे फोल्डर निवडा, तारीख तपासा आणि खात्री करा. अॅप परत आणलेल्या नोंदींसह पुन्हा उघडेल.|इस विंडो के ऊपर FundTrace मेनू में बैकअप से रिकॉर्ड वापस लाएँ चुनें। बैकअप का फ़ोल्डर चुनें, तारीख जाँचें और पुष्टि करें। ऐप वापस आए रिकॉर्ड के साथ फिर खुलेगा।
+Restart FundTrace. If a stopped process left a lock, choose Unlock after a crash in the startup message. A running process cannot be unlocked.|FundTrace पुन्हा उघडा. बंद झालेल्या अॅपचे लॉक राहिले असेल तर सुरुवातीच्या संदेशात अचानक बंद झाल्यानंतरचे लॉक काढा निवडा. चालू अॅपचे लॉक काढता येत नाही.|FundTrace फिर खोलें। बंद ऐप का लॉक बचा हो तो शुरू के संदेश में अचानक बंद होने के बाद का लॉक हटाएँ चुनें। चालू ऐप का लॉक नहीं हट सकता।
 `
     .trim()
     .split("\n")

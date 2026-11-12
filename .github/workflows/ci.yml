@@ -43,3 +43,28 @@ jobs:
           path: |
             artifacts/FundTrace-v*-win-x64-*.zip
             artifacts/phase6-portable-results.json
+  desktop-windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: node node_modules/electron/install.js
+      - run: npm run test:desktop
+      - run: npm run build:desktop
+      - name: Install and test the packaged desktop application
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem artifacts/desktop -Filter 'FundTrace-Setup-*.exe' | Select-Object -First 1
+          $destination = Join-Path $env:RUNNER_TEMP 'FundTrace-installed-test'
+          $install = Start-Process -FilePath $setup.FullName -ArgumentList @('/S', "/D=$destination") -WindowStyle Hidden -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw 'Installer failed' }
+          node scripts/desktop-test.mjs (Join-Path $destination 'FundTrace.exe')
+          if ($LASTEXITCODE -ne 0) { throw 'Installed desktop verification failed' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FundTrace-Desktop-Windows-x64
+          path: artifacts/desktop/FundTrace-Setup-*.exe
