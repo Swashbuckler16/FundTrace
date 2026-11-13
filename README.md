@@ -2,6 +2,8 @@
 
 A completely offline Labour Society workspace for tracing Government receipts to beneficiary payments. **Includes receipts, payments, reconciliation, tax records, search, reports, verified backups and offline recovery.** The application opens directly, with no login, passwords, accounts or cloud services.
 
+> **📘 New to FundTrace? Read the [Complete Customer User Manual (Easy Step-by-Step Guide)](docs/USER-MANUAL.md)** — written in plain, everyday language for non-technical users.
+
 ## How to install (Windows desktop .exe)
 
 1. Open [FundTrace releases](https://github.com/Swashbuckler16/FundTrace/releases) and download **FundTrace-Setup-2.1.0.exe**. This is a complete offline installer; you can copy it to another computer using a USB drive.

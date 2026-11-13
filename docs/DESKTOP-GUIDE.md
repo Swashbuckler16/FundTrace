@@ -1,5 +1,7 @@
 # FundTrace desktop 2.1
 
+> **📘 Customer Guide:** For a complete, non-technical walkthrough of every screen and workflow, see the **[Complete Customer User Manual](USER-MANUAL.md)**.
+
 ## Install and open
 
 Download `FundTrace-Setup-2.1.0.exe` from the repository release. Run it and follow the installer. Open FundTrace from its desktop or Start-menu shortcut. Everything needed to run the app is included. No terminal, external browser, Node installation, account or internet connection is needed after downloading the installer. Close the window to stop the local workspace safely.
